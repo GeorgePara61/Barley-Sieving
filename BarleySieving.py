@@ -55,7 +55,7 @@ def generate_input_GUI(parent, user_inputs):    #generating a gui to input param
     tk.Label(win, text="Picture Name and Crop").grid(row=0, column=0, columnspan=6, sticky="w", padx=10, pady=(10, 0)) #these commands create labels on the gui
     entry1 = tk.Entry(win, width=26) #these commands create entry boxes
     entry1.grid(row=2, column=0, columnspan=2, padx=10, pady=5) #these commands place the entry boxes on the gui
-    tk.Label(win, text="Should be located in {app directory}\\images", font = small_font).grid(row=1, column=0, columnspan= 2, sticky = "w", padx=10, pady=0)
+    tk.Label(win, text="Should be in {app directory}\\images", font = small_font).grid(row=1, column=0, columnspan= 2, sticky = "w", padx=10, pady=0)
     entry16 = tk.Entry(win, width=26)
     entry16.grid(row=2, column=2, columnspan=2, padx=10, pady=5)
     tk.Label(win, text="Scale ('-' for manual)", font = small_font).grid(row=1, column=2, columnspan= 2, sticky = "w", padx=10, pady=0)
@@ -565,5 +565,6 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     generate_output_GUI(root, mean, grains, analyzed_imgs, report1)
 
 if len(analyzed_imgs) > 1: generate_merge_promt_GUI(root)
+
 
 if merge == True: merging.merge(analyzed_imgs, iter, aspect_ratios_all) #merge surface and diameters, bin diameters, show total aspect ratios histogram
