@@ -175,15 +175,16 @@ def merge(analyzed_imgs, bin_cnt, aspect_ratios): #this merges the surface and d
                 ha='center', va='bottom', fontweight='bold', fontsize=10,
                 bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.7))'''
 
+    ymin, ymax = plt.ylim()
     # Add value labels on top of each step
     for i, (center, count) in enumerate(zip(bin_centers, counts)):
         if count == 0: continue
-        plt.text(center, count + 0.25, f'{round((count/len(aspect_ratios)*100), 1)}%', 
+        plt.text(center, count + 0.015*ymax, f'{round((count/len(aspect_ratios)*100), 1)}%', 
                 ha='center', va='bottom', fontweight='bold', fontsize=11)
         
     for i, (center, count) in enumerate(zip(bin_centers, counts)):
         if count == 0: continue
-        plt.text(center, count - 2.5, f'{count}', 
+        plt.text(center, count - 0.05*ymax, f'{count}', 
                 ha='center', va='bottom', fontweight='bold', fontsize=11)
 
     plt.xticks(bin_edges)

@@ -48,11 +48,12 @@ def border_seeking(img, img_name, thr1, thr2, kernel_v, min_grain_size): #this a
 
     plt.show()
 
-    folder = Path('border_outlines')
-    files = [str(f) for f in folder.iterdir() if f.is_file()]
-
     #the following algorithm finds the index the file should have. if the previous file is named testX_diameters_56.csv this will output testX_diameters_57.csv
     #!!!!!!SAVING DISABLED
+
+    '''folder = Path('border_outlines')
+    files = [str(f) for f in folder.iterdir() if f.is_file()]
+
     if len(files) == 0:
         grimg_name = f"border_outlines\\{img_name.split(".")[0]}_borders.tif"
 
@@ -70,9 +71,9 @@ def border_seeking(img, img_name, thr1, thr2, kernel_v, min_grain_size): #this a
                 if temp > index: index = temp
         
         if index == 0: grimg_name = f"border_outlines\\{img_name.split(".")[0]}_borders.tif"
-        else: grimg_name = f"border_outlines\\{img_name.split(".")[0]}_borders_{index}.tif"
+        else: grimg_name = f"border_outlines\\{img_name.split(".")[0]}_borders_{index}.tif"'''
 
     
     #cv2.imwrite(grimg_name, output, [cv2.IMWRITE_TIFF_COMPRESSION, 1])
     
-    return output, grimg_name
+    return output#, grimg_name
