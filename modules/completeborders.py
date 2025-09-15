@@ -1,125 +1,287 @@
+import tkinter as tk
+from tkinter import filedialog
+from PIL import Image, ImageTk, ImageDraw
 import cv2
 from pathlib import Path
-from ctypes import windll
+import copy
 
-def draw_borders(img_name, img_name_i): #this function handles drawing
+class draw_borders:
+    def __init__(self, parent, img_path,img_original):
+        self.win = tk.Toplevel(parent)
+        self.win.title("Draw Missing Borders")
+        self.win.focus_force()
+        self.win.grab_set()  # make Toplevel modal
 
-    global grimg_name
+        # Load base image
+        cv_img = cv2.imread(img_path, cv2.IMREAD_COLOR)
+        self.original_img = Image.fromarray(img_original)
+        self.base_img = Image.fromarray(cv_img)
+        self.overlay_img = Image.new("RGBA", self.base_img.size, (0,0,0,0))
 
-    img_name_n = img_name.split("\\")[1]
-    img_name_n_m = img_name_n.split("_") #these 2 lines get the previous overlay image name without the index eg: border_overlays\test_overlay_10.tif becomes test_ovelay
+        # Stroke history for undo/redo
+        self.strokes = []
+        self.redo_stack = []
 
-    img_name_n = img_name_n_m[0] + "_" + img_name_n_m[1]
+        # Canvas
+        self.scale = 1.0
+        self.offset_x = 0
+        self.offset_y = 0
+        self.canvas = tk.Canvas(self.win, width=self.base_img.width, height=self.base_img.height, bg="white")
+        self.canvas.pack(fill="both", expand=True)
+        self.tk_img = ImageTk.PhotoImage(self.base_img)
+        self.canvas_img_id = self.canvas.create_image(self.offset_x, self.offset_y, anchor="nw", image=self.tk_img)
 
-    drawing = False     # True if mouse is pressed
-    prev_point = None     # Initial coordinates
-    line_thickness = 4  # Thickness of drawn lines
-    overlay_color = (0, 255, 255)  
-    mode = "draw" #default mode between draw and erase
+        # Drawing state
+        self.drawing = False
+        self.prev_x = None
+        self.prev_y = None
+        self.mode = "draw"
+        self.line_thickness = 4
+        self.draw_color = (255, 255, 0, 255)  # yellow
 
+        # Panning state
+        self.panning = False
+        self.pan_start_x = None
+        self.pan_start_y = None
 
-    def draw_line(event, x, y, flags, param):
-        nonlocal drawing, prev_point, img, mode
-        
-        current_point = (x, y)
-        color = overlay_color if mode == "draw" else (0, 0, 0) #this sets the color to the drawing color (yellow by default) if mode is draw, else if it is erase it sets it to black
-        
-        if event == cv2.EVENT_LBUTTONDOWN: #if the user presses the left mouse button, drawing happens
-            drawing = True
-            prev_point = current_point
-            cv2.circle(img, current_point, line_thickness//2, color, -1) #just pressing the left mouse button makes a small circle appear. This draws te initial point, just when the mouse is pressed
-            
-        elif event == cv2.EVENT_MOUSEMOVE: #this commands draws when and where the mouse moves, only if the left mouse button is pressed down (which set drawing = True)
-            if drawing and prev_point:
-                cv2.line(img, prev_point, current_point, color, line_thickness)
-                prev_point = current_point
-                cv2.imshow('Draw Missing Borders', img)
-                
-        elif event == cv2.EVENT_LBUTTONUP: #once the left mouse button is released, draw the last point and set draw = False
-            if drawing and prev_point:
-                cv2.line(img, prev_point, current_point, color, line_thickness)
-            drawing = False
-            prev_point = None
-            cv2.imshow('Draw Missing Borders', img)
+        # Bind mouse events
+        self.canvas.bind("<Button-1>", self.start_draw)
+        self.canvas.bind("<B1-Motion>", self.draw)
+        self.canvas.bind("<ButtonRelease-1>", self.end_draw)
+        self.canvas.bind("<Button-3>", self.start_pan)
+        self.canvas.bind("<B3-Motion>", self.pan)
+        self.canvas.bind("<ButtonRelease-3>", self.end_pan)
+        self.canvas.bind("<MouseWheel>", self.zoom)
+        self.canvas.bind("<Button-4>", self.zoom)  # Linux scroll up
+        self.canvas.bind("<Button-5>", self.zoom)  # Linux scroll down
+        self.canvas.config(cursor="plus")  # approximate square cursor
 
-    cv2.namedWindow('Draw Missing Borders')
-    cv2.setMouseCallback('Draw Missing Borders', draw_line) #this calls the draw_line function for every button action 
+        # Bind keys
+        self.win.bind("<Key>", self.key_handler)
 
-    print("Controls:")
-    print("Press 'd' - Draw mode")
-    print("Press 'e' - Erase mode")
-    print("Press '+' - Increase thickness")
-    print("Press '-' - Decrease thickness")
-    print("Press 's' - Save image")
-    print("Press 'q' - Quit")
+        # Buttons (optional)
+        btn_frame = tk.Frame(self.win)
+        btn_frame.pack(pady=5)
+        tk.Button(btn_frame, text="Draw Mode", command=self.set_draw).pack(side="left", padx=2)
+        tk.Button(btn_frame, text="Erase Mode", command=self.set_erase).pack(side="left", padx=2)
+        tk.Button(btn_frame, text="Thickness +", command=self.increase_thickness).pack(side="left", padx=2)
+        tk.Button(btn_frame, text="Thickness -", command=self.decrease_thickness).pack(side="left", padx=2)
+        tk.Button(btn_frame, text="Undo", command=self.undo).pack(side="left", padx=2)
+        tk.Button(btn_frame, text="Redo", command=self.redo).pack(side="left", padx=2)
+        tk.Button(btn_frame, text="Save", command=self.save_image).pack(side="left", padx=2)
+        tk.Button(btn_frame, text="Close", command=self.win.destroy).pack(side="left", padx=2)
 
-    img = cv2.imread(img_name, cv2.IMREAD_COLOR)
-
-    try:
-        test = img_name.split("\\")[0].split("_")[2]
-    except IndexError:
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-
-    while True:
-
-        screen_width = windll.user32.GetSystemMetrics(0)  #for scaling, so the window is screen-sized
-        screen_height = windll.user32.GetSystemMetrics(1)
-        
-        cv2.namedWindow('Draw Missing Borders', cv2.WINDOW_NORMAL)
-        cv2.resizeWindow('Draw Missing Borders', screen_width, screen_height)
-        cv2.moveWindow('Draw Missing Borders', 0, 0)
-        cv2.imshow('Draw Missing Borders', img)
-        key = cv2.waitKey(1) & 0xFF
-
-        if key == ord('d'):  # Switch to draw mode
-            mode = "draw"
-            print("Mode: Draw")
-        
-        elif key == ord('e'):  # Switch to erase mode
-            mode = "erase"
-            print("Mode: Erase")
-
-        elif key == ord('+'): #increase line thickness
-            line_thickness = min(10, line_thickness + 1)
-            print(f"Thickness: {line_thickness}")
-            
-        elif key == ord('-'): #decrease line thickness
-            line_thickness = max(1, line_thickness - 1)
-            print(f"Thickness: {line_thickness}")
-
-        elif key == ord('q'):  # quit
-            try:
-                temp = grimg_name
-            except Exception:
-                grimg_name = None
-            break
-        elif key == ord('s'):  #save
-            folder = Path('border_overlays_complete')
-            files = [str(f) for f in folder.iterdir() if f.is_file()]
-            
-            #the following algorithm finds the index the file should have. if the previous file is named testX_diameters_56.csv this will output testX_diameters_57.csv
-            if len(files) == 0:
-                grimg_name = f"border_overlays_complete\\{img_name_n.split(".")[0]}_complete.tif"
-            else:
-                index = 0
-                for f in files:
-                    if f.split("\\")[1].split("_")[0] == img_name_i.split(".")[0]:
-                        try:
-                            temp = int(f.split("_")[-1].split(".")[0]) + 1
-                        except ValueError:
-                            index = 1
-                            if len(files) == 1: break
-                            else: continue    
-                        temp = int(f.split("_")[-1].split(".")[0]) + 1
-                        if temp > index: index = temp
-
-                if index == 0: grimg_name = f"border_overlays_complete\\{img_name_n.split(".")[0]}_complete.tif"
-                else: grimg_name = f"border_overlays_complete\\{img_name_n.split(".")[0]}_complete_{index}.tif"
-            
-            cv2.imwrite(grimg_name, img, [cv2.IMWRITE_TIFF_COMPRESSION, 1])
-
-    cv2.destroyAllWindows()
+        self.img_path = img_path
+        self.last_saved_file = None
 
 
-    return grimg_name
+    # ---------------- Drawing ----------------
+    def start_draw(self, event):
+        """Call on mouse button press to begin a new stroke."""
+        x = (event.x - self.offset_x) / self.scale
+        y = (event.y - self.offset_y) / self.scale
+        self.prev_x, self.prev_y = x, y
+        self.drawing = True
+
+        # Initialize current stroke
+        if self.mode == "draw":
+            self.current_stroke = {
+                "points": [(x, y)],
+                "color": self.draw_color,
+                "thickness": self.line_thickness
+            }
+            self.stroke_points = [(x, y)]
+        else:
+            self.current_stroke = None  # erase mode does not track strokes
+            self.stroke_points = []
+
+    def draw(self, event):
+        """Call on mouse motion while button pressed."""
+        if not self.drawing:
+            return
+
+        x = (event.x - self.offset_x) / self.scale
+        y = (event.y - self.offset_y) / self.scale
+
+        # If prev_x is None, just set it and return (prevents huge initial lines)
+        if self.prev_x is None:
+            self.prev_x, self.prev_y = x, y
+            if self.mode == "draw":
+                self.stroke_points = [(x, y)]
+                if self.current_stroke is None:
+                    self.current_stroke = {
+                        "points": [(x, y)],
+                        "color": self.draw_color,
+                        "thickness": self.line_thickness
+                    }
+            return
+
+        if self.mode == "draw":
+            # Append current point to both stroke_points and current_stroke
+            self.stroke_points.append((x, y))
+            if self.current_stroke is not None:
+                self.current_stroke["points"].append((x, y))
+
+            if len(self.stroke_points) >= 2:
+                draw_obj = ImageDraw.Draw(self.overlay_img)
+                draw_obj.line(
+                    self.stroke_points,
+                    fill=self.current_stroke["color"],
+                    width=self.current_stroke["thickness"],
+                    joint="curve"
+                )
+
+        elif self.mode == "erase":
+            # Interpolate along last segment for continuous erase
+            size = self.line_thickness
+            dx = x - self.prev_x
+            dy = y - self.prev_y
+            num_steps = int(max(abs(dx), abs(dy))) or 1
+            for i in range(num_steps + 1):
+                xi = self.prev_x + dx * i / num_steps
+                yi = self.prev_y + dy * i / num_steps
+                x0 = int(max(0, xi - size / 2))
+                y0 = int(max(0, yi - size / 2))
+                x1 = int(min(self.base_img.width, xi + size / 2))
+                y1 = int(min(self.base_img.height, yi + size / 2))
+                region = self.original_img.crop((x0, y0, x1, y1))
+                self.overlay_img.paste(region, (x0, y0))
+
+        # Update previous point
+        self.prev_x, self.prev_y = x, y
+
+        # Merge base + overlay for live display
+        merged = Image.alpha_composite(self.base_img.convert("RGBA"), self.overlay_img)
+        w, h = merged.size
+        scaled = merged.resize((int(w * self.scale), int(h * self.scale)), Image.NEAREST)
+        self.tk_img = ImageTk.PhotoImage(scaled)
+        self.canvas.itemconfig(self.canvas_img_id, image=self.tk_img)
+        self.canvas.coords(self.canvas_img_id, self.offset_x, self.offset_y)
+
+    def end_draw(self, event):
+        """Call on mouse button release to end the current stroke."""
+        self.drawing = False
+        self.prev_x, self.prev_y = None, None
+        self.stroke_points = []  # clear points for next stroke
+
+    # ---------------- Panning ----------------
+    def start_pan(self, event):
+        self.panning = True
+        self.pan_start_x = event.x
+        self.pan_start_y = event.y
+
+    def pan(self, event):
+        if self.panning:
+            dx = event.x - self.pan_start_x
+            dy = event.y - self.pan_start_y
+            self.offset_x += dx
+            self.offset_y += dy
+            self.canvas.move(self.canvas_img_id, dx, dy)
+            self.pan_start_x = event.x
+            self.pan_start_y = event.y
+
+    def end_pan(self, event):
+        self.panning = False
+
+    # ---------------- Zoom ----------------
+    def zoom(self, event):
+        factor = 1.1 if getattr(event, "delta", 0) > 0 or getattr(event, "num", 0) == 4 else 0.9
+        cursor_x = (self.canvas.canvasx(event.x) - self.offset_x)/self.scale
+        cursor_y = (self.canvas.canvasy(event.y) - self.offset_y)/self.scale
+        self.scale *= factor
+        self.offset_x = event.x - cursor_x*self.scale
+        self.offset_y = event.y - cursor_y*self.scale
+        self.update_canvas()
+
+    # ---------------- Canvas update ----------------
+    def update_canvas(self):
+        # Clear overlay and redraw strokes
+        self.overlay_img = Image.new("RGBA", self.base_img.size, (0,0,0,0))
+        for stroke in self.strokes:
+            draw = ImageDraw.Draw(self.overlay_img)
+            points = stroke["points"]
+            color = stroke["color"] if stroke["mode"]=="draw" else (0,0,0,0)
+            thickness = stroke["thickness"]
+            if len(points) > 1:
+                for i in range(len(points)-1):
+                    draw.line([points[i], points[i+1]], fill=color, width=thickness)
+
+        merged = Image.alpha_composite(self.base_img.convert("RGBA"), self.overlay_img)
+        w, h = merged.size
+        scaled = merged.resize((int(w*self.scale), int(h*self.scale)), Image.NEAREST)
+        self.tk_img = ImageTk.PhotoImage(scaled)
+        self.canvas.itemconfig(self.canvas_img_id, image=self.tk_img)
+        self.canvas.coords(self.canvas_img_id, self.offset_x, self.offset_y)
+
+    # ---------------- Keybinds ----------------
+    def key_handler(self, event):
+        key = event.keysym.lower()
+        if key == "d":
+            self.set_draw()
+        elif key == "e":
+            self.set_erase()
+        elif key == "plus" or key == "equal":
+            self.increase_thickness()
+        elif key == "minus":
+            self.decrease_thickness()
+        elif key == "s":
+            self.save_image()
+        elif key == "q":
+            self.win.destroy()
+        elif key == "u":
+            self.undo()
+        elif key == "r":
+            self.redo()
+
+    # ---------------- Buttons ----------------
+    def set_draw(self):
+        self.mode = "draw"
+
+    def set_erase(self):
+        self.mode = "erase"
+
+    def increase_thickness(self):
+        self.line_thickness = min(20, self.line_thickness + 1)
+
+    def decrease_thickness(self):
+        self.line_thickness = max(1, self.line_thickness - 1)
+
+    # ---------------- Undo/Redo ----------------
+    def undo(self):
+        if self.strokes:
+            self.redo_stack.append(self.strokes.pop())
+            self.update_canvas()
+
+    def redo(self):
+        if self.redo_stack:
+            self.strokes.append(self.redo_stack.pop())
+            self.update_canvas()
+
+    # ---------------- Save ----------------
+    def save_image(self):
+        merged = Image.alpha_composite(self.base_img.convert("RGBA"), self.overlay_img)
+        folder = Path("border_overlays_complete")
+        folder.mkdir(exist_ok=True)
+        base_name = Path(self.img_path).stem
+        try:
+            base_name = str(base_name)
+            base_name = base_name.split("_")[0] + "_" + base_name.split("_")[1]
+        except Exception:
+            pass
+        # Find existing files
+        existing_files = list(folder.glob(f"{base_name}_complete*.tif"))
+        if not existing_files:
+            save_path = folder / f"{base_name}_complete.tif"
+        else:
+            # Find the highest index
+            max_index = 0
+            for f in existing_files:
+                stem = f.stem  # e.g., image_complete_3
+                parts = stem.split("_")
+                if parts[-1].isdigit():
+                    idx = int(parts[-1])
+                    if idx > max_index:
+                        max_index = idx
+            save_path = "border_overlays_complete" + "\\" + f"{base_name}_complete_{max_index+1}.tif"
+        merged.convert("RGB").save(save_path, compression="tiff_lzw")        
+        self.last_saved_file = str(save_path)

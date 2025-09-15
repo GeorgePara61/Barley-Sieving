@@ -4,6 +4,7 @@ from pathlib import Path
 def measure_areas(areas, scale, cutoff, in_px, img_name): #get the areas in real length units and calculate the diameters
     total = 0
     totarea = 0
+    totdiam = 0
 
     sx = scale
     sy = scale
@@ -18,6 +19,7 @@ def measure_areas(areas, scale, cutoff, in_px, img_name): #get the areas in real
             if area < cutoff: continue
         totarea += area
         diam = float(np.sqrt((area*4)/np.pi))
+        totdiam += diam
         print(f"Grain No. {key} has an area of {round(area, 2)} μm² and diameter {round(diam, 2)} μm")
         diams.append(diam)
         areas[key] = area
@@ -43,6 +45,6 @@ def measure_areas(areas, scale, cutoff, in_px, img_name): #get the areas in real
         print(f"Τα δεδομένα επιφάνειας αποθηκεύτηκαν στον φάκελο {file_s.split("\\")[0]} με όνομα: {file_s.split("\\")[1]}")
          
 
-    return round(totarea/total, 2), diams
+    return round(totarea/total, 2), diams, round(totdiam/total, 2)
 
 

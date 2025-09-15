@@ -149,7 +149,7 @@ class ScaleCalibrator: #This gets the scale from the image, by drawing a line on
     def set_real_length(self): #pop up window to add real length
         self.real_length = simpledialog.askfloat(
             "Input Length", 
-            "Enter real-world length (units):",
+            "Enter real-world length (μm²):",
             parent=self.top,
             minvalue=0.0001
         )

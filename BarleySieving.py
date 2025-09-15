@@ -8,6 +8,7 @@ import ctypes
 import sys
 import numpy as np
 import cv2
+from pathlib import Path
 
 from modules import cropper
 from modules import grayconv
@@ -23,28 +24,24 @@ from modules import bin
 from modules import merging
 from modules import directionalityanalysis
 
-try: #this will help scale the gui windows
-    ctypes.windll.user32.SetProcessDPIAware()
-except Exception:
-    pass
-
-def get_scaling_factor():   # Accessing Window's scaling to properly scale fonts in guis
+def set_dpi_awareness():
     if sys.platform == "win32":
         try:
-            user32 = ctypes.windll.user32
-            user32.SetProcessDPIAware()
-            dpi = user32.GetDpiForSystem()
-            return dpi / 96.0 
+            ctypes.windll.shcore.SetProcessDpiAwareness(1)  # system DPI aware
         except Exception:
-            return 1.0
-    else: 
-        return 1.0
+            try:
+                ctypes.windll.user32.SetProcessDPIAware()
+            except Exception:
+                pass
 
-def generate_input_GUI(parent, user_inputs):    #generating a gui to input parameters
+def get_scaling_factor(root):   # Accessing Window's scaling to properly scale fonts in guis
+    return root.winfo_fpixels('1i') / 96
+
+def generate_input_GUI(parent, user_inputs): #generating a gui to input parameters
     win = tk.Toplevel(parent)
     win.title(f"Grain Size Calculator - Parameter Input")
 
-    scaling = get_scaling_factor() #request the scaling factor
+    scaling = get_scaling_factor(parent) #request the scaling factor
 
     win.geometry(f"{int(560* scaling)}x{int(520* scaling)}") #gui dimensions (widthxheight)
 
@@ -53,18 +50,29 @@ def generate_input_GUI(parent, user_inputs):    #generating a gui to input param
     small_font = tkFont.Font(family="Segoe UI", size=7, weight="normal")
 
     tk.Label(win, text="Picture Name and Crop").grid(row=0, column=0, columnspan=6, sticky="w", padx=10, pady=(10, 0)) #these commands create labels on the gui
-    entry1 = tk.Entry(win, width=26) #these commands create entry boxes
-    entry1.grid(row=2, column=0, columnspan=2, padx=10, pady=5) #these commands place the entry boxes on the gui
+    folder = Path('images')
+    images = [str(f).split("\\")[1] for f in folder.iterdir() if f.is_file()]
+    img_sel = ttk.Combobox(win,values = images)
+    img_sel.grid(row=2, column=0, columnspan=2, padx=10, pady=5)
+    img_sel.set("")  # Default value
+    img_sel.bind('<Button-1>', lambda e: img_sel.event_generate('<Down>'))
     tk.Label(win, text="Should be in {app directory}\\images", font = small_font).grid(row=1, column=0, columnspan= 2, sticky = "w", padx=10, pady=0)
     entry16 = tk.Entry(win, width=26)
     entry16.grid(row=2, column=2, columnspan=2, padx=10, pady=5)
-    tk.Label(win, text="Scale ('-' for manual)", font = small_font).grid(row=1, column=2, columnspan= 2, sticky = "w", padx=10, pady=0)
+    tk.Label(win, text="Scale (μm/px) ('-' for manual)", font = small_font).grid(row=1, column=2, columnspan= 2, sticky = "w", padx=10, pady=0)
 
-    tk.Label(win, text="Should it be cropped?", font = small_font).grid(row=1, column=4, columnspan=2, sticky="w", padx=10, pady=(10, 0))
+    tk.Label(win, text="Should it be cropped? Input height (px)", font = small_font).grid(row=1, column=4, columnspan=2, sticky="w", padx=10, pady=(10, 0))
 
-    options = ["Yes", "No"] #here I create a dropdown selection list
-    crop_sel = ttk.Combobox(win,values = options)
-    crop_sel.grid(row=2, column=4, columnspan=2, padx=10, pady=5)
+    frame = tk.Frame(win)
+    frame.grid(row=2, column=4, columnspan=2)
+
+    entry17 = tk.Entry(frame, width=18)
+    entry17.pack(side="left", padx=(0, 5))
+
+    options = ["Yes", "No"]
+    crop_sel = ttk.Combobox(frame,values = options, width=4)
+    crop_sel = ttk.Combobox(frame,values = options, width=4)
+    crop_sel.pack(side="left")
     crop_sel.set("Yes")  # Default value
     crop_sel.bind('<Button-1>', lambda e: crop_sel.event_generate('<Down>'))
 
@@ -129,7 +137,7 @@ def generate_input_GUI(parent, user_inputs):    #generating a gui to input param
     entry15.grid(row=26, column=3, columnspan=3, padx=10, pady=5)
 
     try: #this tries to import default data from defaults.txt
-        entry1.insert(0, user_inputs.pop(0))
+        img_sel.insert(0, user_inputs.pop(0))
         entry2.insert(0, user_inputs.pop(0))
         entry3.insert(0, user_inputs.pop(0))
         entry4.insert(0, user_inputs.pop(0))
@@ -145,11 +153,13 @@ def generate_input_GUI(parent, user_inputs):    #generating a gui to input param
         entry14.insert(0, user_inputs.pop(0))
         entry15.insert(0, user_inputs.pop(0))
         entry16.insert(0, user_inputs.pop(0))
+        entry17.insert(0, user_inputs.pop(0))
+
     except IndexError:
         pass
 
     def on_continue(event=None): #read the parameters and start working
-        user_inputs.append(entry1.get())
+        user_inputs.append(img_sel.get())
         user_inputs.append(entry2.get())
         user_inputs.append(entry3.get())
         user_inputs.append(entry4.get())
@@ -165,6 +175,7 @@ def generate_input_GUI(parent, user_inputs):    #generating a gui to input param
         user_inputs.append(entry14.get())
         user_inputs.append(entry15.get())
         user_inputs.append(entry16.get())
+        user_inputs.append(entry17.get())
         global crop #this variable determines if the image will be cropped
         if crop_sel.get() == 'Yes':
             crop =True
@@ -182,7 +193,7 @@ def generate_input_GUI(parent, user_inputs):    #generating a gui to input param
         info = False
     
     def on_info(event=None): #save input and generate the info gui
-        user_inputs.append(entry1.get())
+        user_inputs.append(img_sel.get())
         user_inputs.append(entry2.get())
         user_inputs.append(entry3.get())
         user_inputs.append(entry4.get())
@@ -198,7 +209,7 @@ def generate_input_GUI(parent, user_inputs):    #generating a gui to input param
         user_inputs.append(entry14.get())
         user_inputs.append(entry15.get())
         user_inputs.append(entry16.get())
-
+        user_inputs.append(entry17.get())
         win.destroy()
 
     tk.Button(win, width = 24, text="Run", command=on_continue).grid(row=28, column=0, columnspan=2, pady=10) #this command creates and places a button on the gui
@@ -212,19 +223,19 @@ def generate_input_GUI(parent, user_inputs):    #generating a gui to input param
     win.grab_set()
     win.wait_window()
 
-def generate_output_GUI(parent, mean, grains, anal_imgs, dir_report): #after work, generate a gui with results and next actions
+def generate_output_GUI(parent, mean, grains, anal_imgs, dir_report, mean_d): #after work, generate a gui with results and next actions
     win = tk.Toplevel(parent)
     win.title(f"Grain Size Calculator - Results")
 
-    scaling = get_scaling_factor()
+    scaling = get_scaling_factor(parent)
 
     win.geometry(f"{int(420* scaling)}x{int(240* scaling)}")
     win.focus()
 
-    if grains != None and mean != None: #Following is the text creation the user sees when this gui is generated
-        text = f"> Found a total of {grains} grains!\n> Mean grain area is {mean} μm²!\n"
+    if grains != None and mean != None and mean_d != None: #Following is the text creation the user sees when this gui is generated
+        text = f"> Found a total of {grains} grains!\n> Mean grain area is {mean} μm²!\nMean Diameter is {mean_d} μm!\n"
     else: 
-        text = f'> Mean area not calculated\n'
+        text = f'> Grains Not Found\n> Mean area not calculated\n> Mean Diameter not calculated\n'
 
     if len(anal_imgs) > 0:
         strimg = "> Analyzed Images so far: "
@@ -271,7 +282,7 @@ def generate_info_GUI(parent): #generate a gui detailing the parameters asked in
     win = tk.Toplevel(parent)
     win.title(f"Grain Size Calculator - Application Info")
 
-    scaling = get_scaling_factor()
+    scaling = get_scaling_factor(parent)
 
     win.geometry(f"{int(600* scaling)}x{int(650* scaling)}")
 
@@ -312,7 +323,7 @@ def generate_pre_measure_GUI(parent): #generate a gui to confirm area measuremen
     win = tk.Toplevel(parent)
     win.title(f"Grain Size Calculator - measuring Parameters")
 
-    scaling = get_scaling_factor()
+    scaling = get_scaling_factor(parent)
 
     win.geometry(f"{int(550* scaling)}x{int(250*scaling)}")
 
@@ -326,7 +337,7 @@ def generate_pre_measure_GUI(parent): #generate a gui to confirm area measuremen
     tk.Label(win, text="Should be located in \\border_overlays_complete", font = small_font).grid(row=1, column=0, columnspan= 6, sticky = "w", padx=10, pady=0)
 
     tk.Label(win, text="1) measure Parameters").grid(row=4, column=0, columnspan=6, sticky="w", padx=10)
-    tk.Label(win, text="Grain Min Size (μm² or px²):", font = small_font, pady=0).grid(row=5, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Grain Min Diameter (μm or px):", font = small_font, pady=0).grid(row=5, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
     tk.Label(win, text="Scaling Factor (μm/px):", font = small_font, pady=0).grid(row=5, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
    
     frame = tk.Frame(win)
@@ -338,11 +349,11 @@ def generate_pre_measure_GUI(parent): #generate a gui to confirm area measuremen
     entry2 = tk.Entry(win, width=36)
     entry2.grid(row=6, column=3, columnspan= 3, padx=10, pady=5)
 
-    options = ["px²", "μm²"] #user can choose to give a minimum grain size in pixel count or squared micrometers
+    options = ["px", "μm"] #user can choose to give a minimum grain size in pixel count or squared micrometers
     px_or_μm = ttk.Combobox(frame,values = options, width=4)
     #px_or_μm.grid(row=6, column=2, columnspan=1, padx=(0, 10), pady=5)
     px_or_μm.pack(side="left")
-    px_or_μm.set("px²")  # Default value
+    px_or_μm.set("px")  # Default value
     px_or_μm.bind('<Button-1>', lambda e: px_or_μm.event_generate('<Down>'))
 
     tk.Label(win, text="2) Histogram Bin Count").grid(row=8, column=0, columnspan=6, sticky="w", padx=10)
@@ -370,9 +381,9 @@ def generate_pre_measure_GUI(parent): #generate a gui to confirm area measuremen
         except IndexError:
             measure_inputs[0] = "border_overlays_complete\\" + measure_inputs[0]
         global in_px
-        if px_or_μm.get() == 'px²': 
+        if px_or_μm.get() == 'px': 
             in_px = True
-        elif px_or_μm.get() == 'μm²':
+        elif px_or_μm.get() == 'μm':
             in_px = False
         win.destroy()
         global measure
@@ -399,7 +410,7 @@ def generate_draw_GUI(parent, img_name): #generate a gui to give option to draw 
     win = tk.Toplevel(parent)
     win.title(f"Grain Size Calculator - Drawing Image Selection")
 
-    scaling = get_scaling_factor()
+    scaling = get_scaling_factor(parent)
 
     win.geometry(f"{int(350* scaling)}x{int(120* scaling)}")
 
@@ -434,7 +445,7 @@ def generate_merge_promt_GUI(parent): #if the user analyzes many images, this pr
     win = tk.Toplevel(parent)
     win.title(f"Grain Size Calculator - Merger")
 
-    scaling = get_scaling_factor()
+    scaling = get_scaling_factor(parent)
 
     win.geometry(f"{int(350* scaling)}x{int(200* scaling)}")
     win.focus()
@@ -462,6 +473,7 @@ def generate_merge_promt_GUI(parent): #if the user analyzes many images, this pr
     win.grab_set()       
     win.wait_window()
 
+set_dpi_awareness()
 
 global measure_inputs, overimg_name, analyzed_imgs #the inputs from the pre measure gui, the name of the overlayed image, the images analyzed in a session
 measure_inputs = []
@@ -490,7 +502,7 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
         
     if not rerun: exit(-1)
 
-    img_name, kernel_g, stdev, conval, tgs_s, d, sc, ss, ksize, blend_strength, gamma, thr1, thr2, kernel_s, min_size, scale = user_inputs[0], user_inputs[1], float(user_inputs[2]), float(user_inputs[3]), user_inputs[4], int(user_inputs[5]), float(user_inputs[6]), float(user_inputs[7]), int(user_inputs[8]), float(user_inputs[9]), float(user_inputs[10]), int(user_inputs[11]), int(user_inputs[12]), (user_inputs[13]), int(user_inputs[14]), user_inputs[15]
+    img_name, kernel_g, stdev, conval, tgs_s, d, sc, ss, ksize, blend_strength, gamma, thr1, thr2, kernel_s, min_size, scale, crop = user_inputs[0], user_inputs[1], float(user_inputs[2]), float(user_inputs[3]), user_inputs[4], int(user_inputs[5]), float(user_inputs[6]), float(user_inputs[7]), int(user_inputs[8]), float(user_inputs[9]), float(user_inputs[10]), int(user_inputs[11]), int(user_inputs[12]), (user_inputs[13]), int(user_inputs[14]), user_inputs[15], int(user_inputs[16])
     analyzed_imgs.append(img_name.split(".")[0])
 
     tgs = (int(tgs_s.split(",")[0]),int(tgs_s.split(",")[1]))
@@ -501,7 +513,7 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     print(scale)
     user_inputs[15] = str(scale)
 
-    if crop: img = cropper.crop_img(img_name) #this crops the info bar
+    if crop: img = cropper.crop_img(img_name, crop) #this crops the info bar
     else:
         img_path = f"images\\{img_name}"
         img = cv2.imread(img_path)
@@ -509,7 +521,7 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     grayed, grayed_name = grayconv.grayscale_converter(img, img_name) #this converts the cropped image to grayscale and saves it
     preproccessed = preproccess.img_prep(grayed, kernel_gf, stdev, conval, tgs, d, sc, ss, ksize, blend_strength, gamma) #preproccessing of the image
 
-    print(f"Η εικόνα χωρίς την κάρτα πληροφοριών αποθηκεύτηκε ως {grayed_name.split("\\")[1]} στον φάκελο {grayed_name.split("\\")[0]}.")
+    #print(f"Η εικόνα χωρίς την κάρτα πληροφοριών αποθηκεύτηκε ως {grayed_name.split("\\")[1]} στον φάκελο {grayed_name.split("\\")[0]}.")
 
     outline_img = findborders.border_seeking(preproccessed, img_name, thr1, thr2, kernel, min_size) #this finds the borders
 
@@ -519,7 +531,9 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
 
     generate_draw_GUI(root, overimg_name) #this gui requests the name of the image to draw on. The image the program was just working on is default, but it takes any image in \border_overlays and \border_overlays_complete
 
-    overfinal_name = completeborders.draw_borders(overimg_name, img_name) #user drawn borders
+    draw = completeborders.draw_borders(root, overimg_name, grayed) #user drawn borders
+    root.wait_window(draw.win)
+    overfinal_name = draw.last_saved_file
 
     if overfinal_name != None: print(f"Η εικόνα των ολοκληρωμένων συνώρων αποθηκεύτηκε ως {overfinal_name.split("\\")[1]} στον φάκελο {overfinal_name.split("\\")[0]}.")
 
@@ -544,14 +558,14 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     if measure: #skip sets measure = False 
 
         overfinal_name, scale, cutoff, iter = measure_inputs[0], float(measure_inputs[1]), float(measure_inputs[2]), float(measure_inputs[3])
-        if not in_px: cutoff = cutoff/(np.pow(scale, 2))
+        cutoff = np.pi*pow(cutoff/2, 2)
 
         final_mask, measure = finalmask.create_binary_mask(overfinal_name, kernel) #finallized white grains - black borders image
         if measure: 
             areas, grains, labels =  getareas.measure_grain_area(final_mask, cutoff, in_px) #get grain areas in px
             px_areas = areas.copy()
             print(f"Found {grains} grains.")
-            mean, diams = measurearea.measure_areas(areas, scale, cutoff, in_px, img_name) #get grain areas in μm^2 and diameters
+            mean, diams, mean_d = measurearea.measure_areas(areas, scale, cutoff, in_px, img_name) #get grain areas in μm^2 and diameters
             bin.bin_diameters(diams, iter, img_name) #bin diameters
 
             report1, aspect_ratios = directionalityanalysis.analyze_directionality(labels, px_areas, areas, scale, img_name) #get grain directions and aspect ratios
@@ -559,12 +573,11 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
 
         
     if not measure: 
-        mean, grains, report1 = None, None, None
+        mean, grains, report1, mean_d = None, None, None, None
         analyzed_imgs.pop()
 
-    generate_output_GUI(root, mean, grains, analyzed_imgs, report1)
+    generate_output_GUI(root, mean, grains, analyzed_imgs, report1, mean_d)
 
 if len(analyzed_imgs) > 1: generate_merge_promt_GUI(root)
-
 
 if merge == True: merging.merge(analyzed_imgs, iter, aspect_ratios_all) #merge surface and diameters, bin diameters, show total aspect ratios histogram

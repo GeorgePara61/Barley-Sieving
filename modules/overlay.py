@@ -50,7 +50,7 @@ def overlay_borders(original_img, img_name, img_s, thr1, thr2, kernel_v, min_gra
         'Standard Deviation': {'val': float(stdev), 'range': (0, 5), 'step': 0.1},
         'Contrast Intensity': {'val': float(conval), 'range': (0, 10), 'step': 0.1},
         'Transitions': {'val': int(tgs), 'range': (0, 24), 'step': 1},
-        'Smoothing Range (Post)': {'val': int(d), 'range': (0, 35), 'step': 2},
+        'Smoothing Range (Post)': {'val': int(d), 'range': (1, 35), 'step': 2},
         'Affected Color Range': {'val': int(sc), 'range': (0, 150), 'step': 1},
         'Affected Area Range': {'val': int(ss), 'range': (0, 150), 'step': 1},
         'Thickness': {'val': int(ksize), 'range': (-1, 15), 'step': 2},
