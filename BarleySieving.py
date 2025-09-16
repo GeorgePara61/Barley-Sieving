@@ -618,7 +618,7 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
 
     if measure: #skip sets measure = False 
 
-        overfinal_name, scale, cutoff, iter = measure_inputs[0], float(measure_inputs[1]), float(measure_inputs[2]), float(measure_inputs[3])
+        overfinal_name, scale = measure_inputs[0], float(measure_inputs[1])
         try:
             cutoff = float(measure_inputs[2])
         except Exception:
