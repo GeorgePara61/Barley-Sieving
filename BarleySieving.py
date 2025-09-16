@@ -628,8 +628,8 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
         try:
             iter = float(measure_inputs[3])
         except Exception:
-            print("Histogram bin count set to 0 as it wasn't given.")
-            iter = 0
+            print("Histogram bin count set to 1 as it wasn't given.")
+            iter = 1
             
         cutoff = np.pi*pow(cutoff/2, 2)
 
