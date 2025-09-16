@@ -590,6 +590,7 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     if getguides: generate_tutorial_GUI(root)
     generate_draw_GUI(root, overimg_name) #this gui requests the name of the image to draw on. The image the program was just working on is default, but it takes any image in \border_overlays and \border_overlays_complete
 
+    print("Draw Keybinds:\nDraw: d\nErase: e\nIcrease line thickness: +\nDecrease line thickness: -\nUndo: u\nRedo: r\nSave: s\nQuit: q")
     draw = completeborders.draw_borders(root, overimg_name, grayed) #user drawn borders
     root.wait_window(draw.win)
     overfinal_name = draw.last_saved_file
