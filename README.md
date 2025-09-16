@@ -47,7 +47,7 @@ The overlay that appears after allows to change the pre-process and canny relate
 
 Drawing has the following modes, with their keybinds in parentheses:
 1) Drawing (d), where a yellow line is drawn by holding down the left mouse button.
-2) Erasing (e), where a black line is drawn by holding down the left mouse button.
+2) Erasing (e), which erases yellow lines by holding down the left mouse button.
 3) Undo (u)
 4) Redo (r)
 5) Increasing (+) or decreasing (-) line thickness.
