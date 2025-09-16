@@ -24,9 +24,9 @@ Data from steps (12), (13) are being saved in 2 csv files, one containing area a
 Data from step (17) are being saved in the same format.
 Data from step (14) are also being saved.
 
-When there is no obvious way to exit a window (button, mentioned keybind) close the window via the window's X top right.
+When there is no obvious way to exit a window (button, mentioned keybind) close the window via the window's X top right. Always use english on the keyboard for the keybinds to work.
 
-The scaling factor is acquired by drawing a line (left click + drag) on the scale bar of the image and inputting the real length of that bar (press Set Length on the bottom left). Then the division (real length (units))/(line length (pixels)) gives the scaling factor. Pressing shift locks the line horizontal. Panning the image (right click + drag) and zooming is also available (bottom left). Press accept on the bottom right to continue. The info bar might not show up when the window opens. Pan the image in that case.
+The scaling factor is acquired by drawing a line (left click + drag) on the scale bar of the image and inputting the real length of that bar (press Set Length on the bottom left). Then the division (real length (units))/(line length (pixels)) gives the scaling factor. Pressing shift locks the line horizontally. Panning the image (right click + drag) and zooming is also available (bottom left). Press accept on the bottom right to continue. The info bar might not show up when the window opens. Pan the image in that case.
 
 Pre-processing follows these steps:
 1) Gaussian Blur:
@@ -43,7 +43,7 @@ This algorithm finds the gradients and creates an image of them, which it then b
 
 cv2's Canny algorithm is used to find the gradients. It outputs an image of the borders it found. Then, cv2's contour-seeking algorithm finds them in that image and discards those that their size falls under a minimum. After that, a function is applied to try and connect the borders that are broken.
 
-The overlay that appears after allows to change the pre-process and canny related parameters to improve the identified borders and remove noise. The background image can be switched between the original and the pre-processed.
+The overlay that appears after allows to change the pre-process and canny related parameters to improve the identified borders and remove noise. The background image can be switched between the original and the pre-processed by pressing switch. Press Generate to apply changes from the right hand sliders (the bottom ones update automatically). When done, press X.
 
 Drawing has the following modes, with their keybinds in parentheses:
 1) Drawing (d), where a yellow line is drawn by holding down the left mouse button.
@@ -116,6 +116,8 @@ Here, as the last part of this small guide, I will talk about the sequence I was
 5th) I didn't stop there. After finishing with canny, I tried adjusting the previous parameters, because they could be positively affected by other changes I did.
 
 A small tip: If you find a good parameter combo but wanna keep experimenting, you'll probably note down the parameters. I'd suggest editing the defaults text file, if you don't care for the previous defaults, so you can exit and rerun the app with these.
+
+You might notice a bug where some of the GUIs don't fully appear. That happens if settings > system > display > scale and layout > scale isn't set at 125% on your machine. If you switch to 125% they'll generate properly.
 
 The code exists in the directory of this app. Make any changes you'd like and rebuild it. I used PyInstaller.
 To build, run:

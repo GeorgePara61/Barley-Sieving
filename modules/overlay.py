@@ -156,6 +156,9 @@ def overlay_borders(original_img, img_name, img_s, thr1, thr2, kernel_v, min_gra
     # Show and wait for window to close
     plt.show()
 
+    if blurred:
+        show_blur("event")
+
     folder = Path('border_overlays') #save image
     files = [str(f) for f in folder.iterdir() if f.is_file()]
 

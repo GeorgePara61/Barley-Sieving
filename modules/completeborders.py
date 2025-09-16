@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import messagebox
+from tkinter import simpledialog
 from PIL import Image, ImageTk, ImageDraw
 import cv2
 from pathlib import Path
@@ -7,6 +8,7 @@ import copy
 
 class draw_borders:
     def __init__(self, parent, img_path,img_original):
+        self.parent = parent
         self.win = tk.Toplevel(parent)
         self.win.title("Draw Missing Borders")
         self.win.focus_force()
@@ -285,3 +287,23 @@ class draw_borders:
             save_path = "border_overlays_complete" + "\\" + f"{base_name}_complete_{max_index+1}.tif"
         merged.convert("RGB").save(save_path, compression="tiff_lzw")        
         self.last_saved_file = str(save_path)
+        MessageDialog(self.parent, "Saved!", f"The Image has been saved in '\\border_overlays_complete' as:\n{save_path.split("\\")[1]}.")
+
+        
+
+class MessageDialog(simpledialog.Dialog):
+    def __init__(self, parent, title, message):
+        self.message = message
+        super().__init__(parent, title)
+
+    def body(self, master):
+        tk.Label(master, text=self.message, wraplength=500).pack(padx=40, pady=10)
+        return None  # no initial focus needed
+
+    def buttonbox(self):
+        box = tk.Frame(self)
+        tk.Button(box, text="OK", width=10, command=self.ok, default=tk.ACTIVE).pack(pady=5)
+        box.pack()
+
+    def apply(self):
+        pass  # nothing to return

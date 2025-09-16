@@ -39,17 +39,20 @@ def get_scaling_factor(root):   # Accessing Window's scaling to properly scale f
 
 def generate_input_GUI(parent, user_inputs): #generating a gui to input parameters
     win = tk.Toplevel(parent)
-    win.title(f"Grain Size Calculator - Parameter Input")
+    win.title(f"Grain Size Calculator - Initial Parameter Input")
 
     scaling = get_scaling_factor(parent) #request the scaling factor
 
-    win.geometry(f"{int(560* scaling)}x{int(520* scaling)}") #gui dimensions (widthxheight)
+    win.geometry(f"{int(560* scaling)}x{int(550* scaling)}") #gui dimensions (widthxheight)
 
     win.focus()
 
     small_font = tkFont.Font(family="Segoe UI", size=7, weight="normal")
+    large_font = tkFont.Font(family="Segoe UI", size=12, weight="normal")
 
-    tk.Label(win, text="Picture Name and Crop").grid(row=0, column=0, columnspan=6, sticky="w", padx=10, pady=(10, 0)) #these commands create labels on the gui
+    tk.Label(win, text="Initial Parameter Input (Can be changed later)", font = large_font).grid(row=3, column=0, columnspan=6, sticky="we", padx=10, pady=(10, 0)) #these commands create labels on the gui
+
+    tk.Label(win, text="Picture Name, Scale, Crop").grid(row=0, column=0, columnspan=6, sticky="w", padx=10, pady=(10, 0)) #these commands create labels on the gui
     folder = Path('images')
     images = [str(f).split("\\")[1] for f in folder.iterdir() if f.is_file()]
     img_sel = ttk.Combobox(win,values = images)
@@ -76,65 +79,65 @@ def generate_input_GUI(parent, user_inputs): #generating a gui to input paramete
     crop_sel.set("Yes")  # Default value
     crop_sel.bind('<Button-1>', lambda e: crop_sel.event_generate('<Down>'))
 
-    tk.Label(win, text="1) Pre Contrast Adjustment Smoothing Parameters").grid(row=4, column=0, columnspan=6, sticky="w", padx=10)
-    tk.Label(win, text="Smoothing Range:", font = small_font, pady=0).grid(row=5, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
-    tk.Label(win, text="Standard Deviation (px):", font = small_font, pady=0).grid(row=5, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="1) Pre Contrast Adjustment Smoothing Parameters").grid(row=5, column=0, columnspan=6, sticky="w", padx=10)
+    tk.Label(win, text="Smoothing Range:", font = small_font, pady=0).grid(row=6, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Standard Deviation (px):", font = small_font, pady=0).grid(row=7, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
 
     entry2 = tk.Entry(win, width=39)
-    entry2.grid(row=6, column=0, columnspan= 3, padx=10, pady=5)
+    entry2.grid(row=7, column=0, columnspan= 3, padx=10, pady=5)
     entry3 = tk.Entry(win, width=39)
-    entry3.grid(row=6, column=3, columnspan= 3, padx=10, pady=5)
+    entry3.grid(row=7, column=3, columnspan= 3, padx=10, pady=5)
 
-    tk.Label(win, text="2) Contrast Enhancement Parameters:").grid(row=8, column=0, columnspan=6, sticky="w", padx=10, pady=(10, 0))
-    tk.Label(win, text="Intensity:", font = small_font, pady=0).grid(row=9, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
-    tk.Label(win, text="Transitions (px):", font = small_font, pady=0).grid(row=9, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="2) Contrast Enhancement Parameters:").grid(row=9, column=0, columnspan=6, sticky="w", padx=10, pady=(10, 0))
+    tk.Label(win, text="Intensity:", font = small_font, pady=0).grid(row=10, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Transitions (px):", font = small_font, pady=0).grid(row=10, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
 
     entry4 = tk.Entry(win, width=39)
-    entry4.grid(row=10, column=0, columnspan=3, padx=10, pady=5)
+    entry4.grid(row=11, column=0, columnspan=3, padx=10, pady=5)
     entry5 = tk.Entry(win, width=39)
-    entry5.grid(row=10, column=3, columnspan=3, padx=10, pady=5)
+    entry5.grid(row=11, column=3, columnspan=3, padx=10, pady=5)
 
-    tk.Label(win, text="3) Post Contrast Adjustment Smoothing Parameters").grid(row=12, column=0, columnspan=6, sticky="w", padx=10)
-    tk.Label(win, text="Smoothing Range (px):", font = small_font, pady=0).grid(row=13, column=0, columnspan= 2, sticky="w", padx=10, pady=0)
-    tk.Label(win, text="Affected Color Range (gv):", font = small_font, pady=0).grid(row=13, column=2, columnspan= 2, sticky="w", padx=10, pady=0)
-    tk.Label(win, text="Affected Area Range (px):", font = small_font, pady=0).grid(row=13, column=4, columnspan= 2, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="3) Post Contrast Adjustment Smoothing Parameters").grid(row=13, column=0, columnspan=6, sticky="w", padx=10)
+    tk.Label(win, text="Smoothing Range (px):", font = small_font, pady=0).grid(row=14, column=0, columnspan= 2, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Affected Color Range (gv):", font = small_font, pady=0).grid(row=14, column=2, columnspan= 2, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Affected Area Range (px):", font = small_font, pady=0).grid(row=14, column=4, columnspan= 2, sticky="w", padx=10, pady=0)
 
     entry6 = tk.Entry(win, width=24)
-    entry6.grid(row=14, column=0, columnspan= 2, padx=10, pady=5)
+    entry6.grid(row=15, column=0, columnspan= 2, padx=10, pady=5)
     entry7 = tk.Entry(win, width=24)
-    entry7.grid(row=14, column=2, columnspan= 2, padx=10, pady=5)
+    entry7.grid(row=15, column=2, columnspan= 2, padx=10, pady=5)
     entry8 = tk.Entry(win, width=24)
-    entry8.grid(row=14, column=4, columnspan= 2, padx=10, pady=5)
+    entry8.grid(row=15, column=4, columnspan= 2, padx=10, pady=5)
 
-    tk.Label(win, text="4) Gradient Enhancement Parameters - Boundary Prominence:").grid(row=16, column=0, columnspan=6, sticky="w", padx=10)
-    tk.Label(win, text="Thickness:", font = small_font, pady=0).grid(row=17, column=0, columnspan= 2, sticky="w", padx=10, pady=0)
-    tk.Label(win, text="Blend Factor:", font = small_font, pady=0).grid(row=17, column=2, columnspan= 2, sticky="w", padx=10, pady=0)
-    tk.Label(win, text="Gamma:", font = small_font, pady=0).grid(row=17, column=4, columnspan= 2, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="4) Gradient Enhancement Parameters - Boundary Prominence:").grid(row=17, column=0, columnspan=6, sticky="w", padx=10)
+    tk.Label(win, text="Thickness:", font = small_font, pady=0).grid(row=18, column=0, columnspan= 2, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Blend Factor:", font = small_font, pady=0).grid(row=18, column=2, columnspan= 2, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Gamma:", font = small_font, pady=0).grid(row=18, column=4, columnspan= 2, sticky="w", padx=10, pady=0)
 
     entry9 = tk.Entry(win, width=24)
-    entry9.grid(row=18, column=0, columnspan= 2, padx=10, pady=5)
+    entry9.grid(row=19, column=0, columnspan= 2, padx=10, pady=5)
     entry10 = tk.Entry(win, width=24)
-    entry10.grid(row=18, column=2, columnspan= 2, padx=10, pady=5)
+    entry10.grid(row=19, column=2, columnspan= 2, padx=10, pady=5)
     entry11 = tk.Entry(win, width=24)
-    entry11.grid(row=18, column=4, columnspan= 2, padx=10, pady=5)
+    entry11.grid(row=19, column=4, columnspan= 2, padx=10, pady=5)
 
-    tk.Label(win, text="5) Canny Parameters").grid(row=20, column=0, columnspan=6, sticky="w", padx=10)
-    tk.Label(win, text="Canny Threshold 1 (gv/px):", font = small_font, pady=0).grid(row=21, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
-    tk.Label(win, text="Canny Threshold 2 (gv/px):", font = small_font, pady=0).grid(row=21, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="5) Canny Parameters").grid(row=21, column=0, columnspan=6, sticky="w", padx=10)
+    tk.Label(win, text="Canny Threshold 1 (gv/px):", font = small_font, pady=0).grid(row=22, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Canny Threshold 2 (gv/px):", font = small_font, pady=0).grid(row=22, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
 
     entry12 = tk.Entry(win, width=39)
-    entry12.grid(row=22, column=0, columnspan=3, padx=10, pady=5)
+    entry12.grid(row=23, column=0, columnspan=3, padx=10, pady=5)
     entry13 = tk.Entry(win, width=39)
-    entry13.grid(row=22, column=3, columnspan=3, padx=10, pady=5)
+    entry13.grid(row=23, column=3, columnspan=3, padx=10, pady=5)
 
-    tk.Label(win, text="5) Gap and Noise Removal").grid(row=24, column=0, columnspan=6, sticky="w", padx=10)
-    tk.Label(win, text="Gap Bridge Parameter:", font = small_font, pady=0).grid(row=25, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
-    tk.Label(win, text="Minimum Object Size (px):", font = small_font, pady=0).grid(row=25, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="5) Gap and Noise Removal").grid(row=25, column=0, columnspan=6, sticky="w", padx=10)
+    tk.Label(win, text="Gap Bridge Parameter:", font = small_font, pady=0).grid(row=26, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Minimum Object Size (px):", font = small_font, pady=0).grid(row=26, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
 
     entry14 = tk.Entry(win, width=39)
-    entry14.grid(row=26, column=0, columnspan=3, padx=10, pady=5)
+    entry14.grid(row=27, column=0, columnspan=3, padx=10, pady=5)
     entry15 = tk.Entry(win, width=39)
-    entry15.grid(row=26, column=3, columnspan=3, padx=10, pady=5)
+    entry15.grid(row=27, column=3, columnspan=3, padx=10, pady=5)
 
     try: #this tries to import default data from defaults.txt
         img_sel.insert(0, user_inputs.pop(0))
@@ -212,9 +215,9 @@ def generate_input_GUI(parent, user_inputs): #generating a gui to input paramete
         user_inputs.append(entry17.get())
         win.destroy()
 
-    tk.Button(win, width = 24, text="Run", command=on_continue).grid(row=28, column=0, columnspan=2, pady=10) #this command creates and places a button on the gui
-    tk.Button(win, width = 24, text="Info", command=on_info).grid(row=28, column=2, columnspan=2, pady=10)
-    tk.Button(win, width = 24, text="Exit", command=on_exit).grid(row=28, column=4, columnspan=2, pady=10)
+    tk.Button(win, width = 24, text="Run", command=on_continue).grid(row=29, column=0, columnspan=2, pady=10) #this command creates and places a button on the gui
+    tk.Button(win, width = 24, text="Info", command=on_info).grid(row=29, column=2, columnspan=2, pady=10)
+    tk.Button(win, width = 24, text="Exit", command=on_exit).grid(row=29, column=4, columnspan=2, pady=10)
 
 
     win.bind("<Return>", on_continue)
@@ -321,7 +324,7 @@ def generate_info_GUI(parent): #generate a gui detailing the parameters asked in
 
 def generate_pre_measure_GUI(parent): #generate a gui to confirm area measurement, and input the number of histogram bins and minimum grain size
     win = tk.Toplevel(parent)
-    win.title(f"Grain Size Calculator - measuring Parameters")
+    win.title(f"Grain Size Calculator - Measuring Parameters")
 
     scaling = get_scaling_factor(parent)
 
@@ -473,6 +476,53 @@ def generate_merge_promt_GUI(parent): #if the user analyzes many images, this pr
     win.grab_set()       
     win.wait_window()
 
+def generate_tutorial_GUI(parent):
+    global guidn
+    guidn += 1
+
+    guide = {1: "Welcome!\nThis application allows for a partial grain boundary identification. It cannot find all the grain boundaries by itself, so user input through drawing is required to close them.\nThe structure consists of a chain of popup windows. When there is no obvious way to exit a window (button, mentioned keybind) close the window via the window's X top right. To use the keybinds, switch the keyboard language to english.\nNow the parameter input will follow. A picture can be selected, some settings (scale, crop) can be configured and the parameters for the program's functions can be entered. The parameters can be changed later.\nIf you'd like to stop getting tutorials at any point, press 'Close Guides'. Else, press 'Continue'.",
+             2: "Now you'll enter the scale. The scaling factor is acquired by drawing a line (left click + drag) on the scale bar of the image and inputting the real length of that bar (press Set Length on the bottom left). Then the division (real length (units))/(line length (pixels)) gives the scaling factor. Pressing shift locks the line horizontally. Panning the image (right click + drag) and zooming is also available (bottom left). Press accept on the bottom right to continue. The info bar might not show up when the window opens, so pan the image in that case.", 
+             3: "Now you'll get a preview of the borders the program found overlayed on the image. You can change certain parameters to improve what was found. Press Generate to apply changes from the right hand sliders (the bottom ones update automatically). Press switch to preview the blurred image. When done, press X.\nBEWARE!!! Always press Generate before moving on to send the found overlays to the drawing sagment.", 
+             4: "Now you'll draw on the image with the found borders to complete the borders and erase noise. Keybinds:\n1) Drawing (d), where a yellow line is drawn by holding down the left mouse button.\n2) Erasing (e), where a black line is drawn by holding down the left mouse button.\n3) Undo (u)\n4) Redo (r)\n5) Increasing (+) or decreasing (-) line thickness.\n6) Zooming in and out (scrollwheel or trackpad)\n7) Panning (by holding down the right mouse button)\n8) Saving the image (s).\n9) Quitting drawing (q).\nBEWARE!! Quitting (q) does NOT save the image.",
+             5: "The following window will ask for parameters regarding the measuring.\nAfter that, the resulting images will appear and the results will be saved."}
+
+    win = tk.Toplevel(parent)
+    win.title(f"Grain Size Calculator - Tutorial {guidn}")
+
+    scaling = get_scaling_factor(parent)
+
+    win.geometry(f"{int(420* scaling)}x{int(240* scaling)}")
+    win.focus()
+
+
+    text_area = scrolledtext.ScrolledText(win, wrap=tk.WORD, font=("Segoe UI Symbol", 12))
+    text_area.insert(tk.END, guide[guidn])
+    text_area.configure(state='disabled')
+    text_area.grid(row=0, column=0, columnspan=4, padx=10, pady=(10, 5), sticky="nsew")
+
+    for r in range(4):
+        win.rowconfigure(r, weight=1) 
+    for c in range(4):
+        win.columnconfigure(c, weight=1)
+
+    def on_continue(event=None): 
+        win.destroy() 
+
+    def on_nah(event=None): 
+        win.destroy()
+        global getguides
+        getguides = False
+
+    tk.Button(win, width = 24, text="Continue", command=on_continue).grid(row=4, column=0, columnspan=2, pady=10)
+    tk.Button(win, width = 24, text="Close Guides", command=on_nah).grid(row=4, column=2, columnspan=2, pady=10)
+
+
+    win.bind("<Return>", on_continue)
+    win.bind("<Delete>", on_nah)
+
+    win.grab_set()       
+    win.wait_window()
+
 set_dpi_awareness()
 
 global measure_inputs, overimg_name, analyzed_imgs #the inputs from the pre measure gui, the name of the overlayed image, the images analyzed in a session
@@ -484,14 +534,18 @@ user_inputs = [] #the inputs from the first gui
 analyzed_imgs = []
 merge = False #handles the merge function
 aspect_ratios_all = [] #stores aspect ratios of all images
+getguides = True
+guidn = 0
 
 file = f"defaults.txt"
 with open(file, "r") as input: #load default parameters
     for line in input:
         user_inputs.append(line.split("|")[0])
 
+if getguides: generate_tutorial_GUI(root)
 while rerun: #looping the program, unless exit is pressed which sets rerun = False
     
+    guidn = 1
     info = True #this hanles whether the info panel will show. Not choosing info on the first gui sets it to false
     while info: #this gives the ability to loop from the info to the input gui while the latter is open
         if not rerun: exit(-1)
@@ -509,7 +563,10 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     kernel = (int(kernel_s.split(",")[0]),int(kernel_s.split(",")[1]))
     kernel_gf = (int(kernel_g.split(",")[0]), int(kernel_g.split(",")[0]))
 
-    if scale == '-': scale = scaling.get_scale(root, img_name) #this opens a window where the user draws a line on the scale bar to get the scale
+    if scale == '-': 
+        if getguides: generate_tutorial_GUI(root)
+        scale = scaling.get_scale(root, img_name) #this opens a window where the user draws a line on the scale bar to get the scale
+    else: guidn = 2
     print(scale)
     user_inputs[15] = str(scale)
 
@@ -525,10 +582,12 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
 
     outline_img = findborders.border_seeking(preproccessed, img_name, thr1, thr2, kernel, min_size) #this finds the borders
 
+    if getguides: generate_tutorial_GUI(root)
     overlay_img, overimg_name, user_inputs[11], user_inputs[12], user_inputs[1], user_inputs[2], user_inputs[3], user_inputs[4], user_inputs[5], user_inputs[6], user_inputs[7], user_inputs[8], user_inputs[9], user_inputs[10] = overlay.overlay_borders(grayed, img_name, preproccessed, thr1, thr2, kernel, min_size, outline_img, kernel_g.split(",")[0], stdev, conval, tgs_s.split(",")[0], d, sc, ss, ksize, blend_strength, gamma) #this overlays the detected borders to the original. Sliders that can change the different parameters exist
 
     print(f"Η εικόνα των συνώρων αποθηκεύτηκε ως {overimg_name.split("\\")[1]} στον φάκελο {overimg_name.split("\\")[0]}.")
 
+    if getguides: generate_tutorial_GUI(root)
     generate_draw_GUI(root, overimg_name) #this gui requests the name of the image to draw on. The image the program was just working on is default, but it takes any image in \border_overlays and \border_overlays_complete
 
     draw = completeborders.draw_borders(root, overimg_name, grayed) #user drawn borders
@@ -551,6 +610,7 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     measure_inputs.append(str(cutoff))
     measure_inputs.append(str(iter))
 
+    if getguides: generate_tutorial_GUI(root)
     generate_pre_measure_GUI(root)
 
     if scale == None: in_px = True
@@ -558,6 +618,18 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     if measure: #skip sets measure = False 
 
         overfinal_name, scale, cutoff, iter = measure_inputs[0], float(measure_inputs[1]), float(measure_inputs[2]), float(measure_inputs[3])
+        try:
+            cutoff = float(measure_inputs[2])
+        except Exception:
+            print("Minimum grain diameter set to 0 as it wasn't given.")
+            cutoff = 0
+
+        try:
+            iter = float(measure_inputs[3])
+        except Exception:
+            print("Histogram bin count set to 0 as it wasn't given.")
+            iter = 0
+            
         cutoff = np.pi*pow(cutoff/2, 2)
 
         final_mask, measure = finalmask.create_binary_mask(overfinal_name, kernel) #finallized white grains - black borders image
