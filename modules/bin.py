@@ -8,7 +8,7 @@ def bin_diameters(diameters, iter, img_name): #this function handles data bining
     prev_step = 0
     maxx = max(diameters)
     step = maxx / iter #the lenght of (x1, x2)
-    img_name = img_name.split(".")[0]
+    img_name = ".".join(img_name.split(".")[:-1])
 
     while curr_step < maxx: #starting at zero and finishing when reaching the max value
         prev_step = curr_step #this sets the previous x2 as the current x1
@@ -29,12 +29,12 @@ def bin_diameters(diameters, iter, img_name): #this function handles data bining
         for f in files:
             if f.split("\\")[1].split("_")[0] == img_name:
                 try:
-                    temp = int(f.split("_")[-1].split(".")[0]) + 1
+                    temp = int(".".join(f.split("_")[-1].split(".")[:-1])) + 1
                 except ValueError:
                     index = 1
                     if len(files) == 1: break
                     else: continue    
-                temp = int(f.split("_")[-1].split(".")[0]) + 1
+                temp = int(f.split("_")[-1].int(".".join(f.split("_")[-1].split(".")[:-1])) + 1) + 1
                 if temp > index: index = temp
 
         if index == 0: file_d = f"diameters_binned\\{img_name}_diameters_binned.csv"

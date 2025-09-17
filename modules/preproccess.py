@@ -40,6 +40,6 @@ def img_prep(img, kernel_gf, stdev, conval, tgs, d, sc, ss, ksize, sobel_blend, 
     #final = cv2.medianBlur(final, 3)
     
     '''name = "example.tif"
-    cv2.imwrite(name, final, [cv2.IMWRITE_TIFF_COMPRESSION, 1])'''
+    cv2.imwrite(name, final, [cv2.IMWRITE_TIFF_COMPRESSION, 5])'''
 
     return final

@@ -85,17 +85,14 @@ class draw_borders:
         self.prev_x, self.prev_y = x, y
         self.drawing = True
 
-        # Initialize current stroke
-        if self.mode == "draw":
-            self.current_stroke = {
-                "points": [(x, y)],
-                "color": self.draw_color,
-                "thickness": self.line_thickness
-            }
-            self.stroke_points = [(x, y)]
-        else:
-            self.current_stroke = None  # erase mode does not track strokes
-            self.stroke_points = []
+        # Initialize current stroke for both draw and erase
+        self.current_stroke = {
+            "points": [(x, y)],
+            "mode": self.mode,
+            "color": self.draw_color if self.mode == "draw" else None,
+            "thickness": self.line_thickness
+        }
+        self.stroke_points = [(x, y)]
 
     def draw(self, event):
         """Call on mouse motion while button pressed."""
@@ -105,36 +102,49 @@ class draw_borders:
         x = (event.x - self.offset_x) / self.scale
         y = (event.y - self.offset_y) / self.scale
 
-        # If prev_x is None, just set it and return (prevents huge initial lines)
+        # Avoid long jumps on first move
         if self.prev_x is None:
             self.prev_x, self.prev_y = x, y
-            if self.mode == "draw":
-                self.stroke_points = [(x, y)]
-                if self.current_stroke is None:
-                    self.current_stroke = {
-                        "points": [(x, y)],
-                        "color": self.draw_color,
-                        "thickness": self.line_thickness
-                    }
+            # Ensure current_stroke exists
+            if self.current_stroke is None:
+                self.current_stroke = {
+                    "points": [(x, y)],
+                    "mode": self.mode,
+                    "color": self.draw_color if self.mode == "draw" else None,
+                    "thickness": self.line_thickness
+                }
+            else:
+                self.current_stroke["points"].append((x, y))
+            self.stroke_points.append((x, y))
             return
 
-        if self.mode == "draw":
-            # Append current point to both stroke_points and current_stroke
-            self.stroke_points.append((x, y))
-            if self.current_stroke is not None:
-                self.current_stroke["points"].append((x, y))
+        # Ensure current_stroke exists (safety)
+        if self.current_stroke is None:
+            self.current_stroke = {
+                "points": [(self.prev_x, self.prev_y)],
+                "mode": self.mode,
+                "color": self.draw_color if self.mode == "draw" else None,
+                "thickness": self.line_thickness
+            }
 
-            if len(self.stroke_points) >= 2:
-                draw_obj = ImageDraw.Draw(self.overlay_img)
-                draw_obj.line(
-                    self.stroke_points,
-                    fill=self.current_stroke["color"],
-                    width=self.current_stroke["thickness"],
-                    joint="curve"
-                )
+        # Append the immediate sample (sparse) to stroke_points
+        self.stroke_points.append((x, y))
+
+        if self.mode == "draw":
+            # Record the point in the stroke
+            self.current_stroke["points"].append((x, y))
+            # Live draw the segment between prev and current
+            draw_obj = ImageDraw.Draw(self.overlay_img)
+            draw_obj.line(
+                [self.prev_x, self.prev_y, x, y],
+                fill=self.current_stroke["color"],
+                width=self.current_stroke["thickness"],
+                joint="curve"
+            )
 
         elif self.mode == "erase":
-            # Interpolate along last segment for continuous erase
+            # Interpolate along the last segment for continuous erase,
+            # paste live and ALSO record the dense points into current_stroke
             size = self.line_thickness
             dx = x - self.prev_x
             dy = y - self.prev_y
@@ -142,17 +152,23 @@ class draw_borders:
             for i in range(num_steps + 1):
                 xi = self.prev_x + dx * i / num_steps
                 yi = self.prev_y + dy * i / num_steps
+
+                # record dense point into stroke so redo can replay exactly
+                self.current_stroke["points"].append((xi, yi))
+
+                # paste original pixels for live erase preview
                 x0 = int(max(0, xi - size / 2))
                 y0 = int(max(0, yi - size / 2))
                 x1 = int(min(self.base_img.width, xi + size / 2))
                 y1 = int(min(self.base_img.height, yi + size / 2))
-                region = self.original_img.crop((x0, y0, x1, y1))
-                self.overlay_img.paste(region, (x0, y0))
+                if x1 > x0 and y1 > y0:
+                    region = self.original_img.crop((x0, y0, x1, y1))
+                    self.overlay_img.paste(region, (x0, y0))
 
         # Update previous point
         self.prev_x, self.prev_y = x, y
 
-        # Merge base + overlay for live display
+        # Live merge & show
         merged = Image.alpha_composite(self.base_img.convert("RGBA"), self.overlay_img)
         w, h = merged.size
         scaled = merged.resize((int(w * self.scale), int(h * self.scale)), Image.NEAREST)
@@ -160,11 +176,16 @@ class draw_borders:
         self.canvas.itemconfig(self.canvas_img_id, image=self.tk_img)
         self.canvas.coords(self.canvas_img_id, self.offset_x, self.offset_y)
 
+
     def end_draw(self, event):
         """Call on mouse button release to end the current stroke."""
+        if self.current_stroke:
+            self.strokes.append(self.current_stroke)
+            self.redo_stack.clear()
         self.drawing = False
         self.prev_x, self.prev_y = None, None
-        self.stroke_points = []  # clear points for next stroke
+        self.stroke_points = []
+        self.current_stroke = None
 
     # ---------------- Panning ----------------
     def start_pan(self, event):
@@ -197,23 +218,51 @@ class draw_borders:
 
     # ---------------- Canvas update ----------------
     def update_canvas(self):
-        # Clear overlay and redraw strokes
-        self.overlay_img = Image.new("RGBA", self.base_img.size, (0,0,0,0))
-        for stroke in self.strokes:
-            draw = ImageDraw.Draw(self.overlay_img)
-            points = stroke["points"]
-            color = stroke["color"] if stroke["mode"]=="draw" else (0,0,0,0)
-            thickness = stroke["thickness"]
-            if len(points) > 1:
-                for i in range(len(points)-1):
-                    draw.line([points[i], points[i+1]], fill=color, width=thickness)
+        """Redraws everything from the stroke history (handles draw + erase)."""
+        # Reset overlay
+        self.overlay_img = Image.new("RGBA", self.base_img.size, (0, 0, 0, 0))
 
+        for stroke in self.strokes:
+            mode = stroke.get("mode", "draw")
+            points = stroke.get("points", [])
+            thickness = int(stroke.get("thickness", 1))
+            color = stroke.get("color", (255, 255, 0, 255))
+
+            if mode == "draw":
+                # Draw continuous line through stored points (PIL will join them)
+                if len(points) > 1:
+                    draw = ImageDraw.Draw(self.overlay_img)
+                    draw.line(points, fill=color, width=thickness, joint="curve")
+
+            elif mode == "erase":
+                # Replay erase by interpolating between stored points and pasting original pixels
+                if len(points) < 1:
+                    continue
+                for i in range(1, len(points)):
+                    x0_pt, y0_pt = points[i - 1]
+                    x1_pt, y1_pt = points[i]
+                    dx = x1_pt - x0_pt
+                    dy = y1_pt - y0_pt
+                    steps = int(max(abs(dx), abs(dy))) or 1
+                    for s in range(steps + 1):
+                        xi = x0_pt + dx * s / steps
+                        yi = y0_pt + dy * s / steps
+                        bx0 = int(max(0, xi - thickness / 2))
+                        by0 = int(max(0, yi - thickness / 2))
+                        bx1 = int(min(self.base_img.width, xi + thickness / 2))
+                        by1 = int(min(self.base_img.height, yi + thickness / 2))
+                        if bx1 > bx0 and by1 > by0:
+                            region = self.original_img.crop((bx0, by0, bx1, by1))
+                            self.overlay_img.paste(region, (bx0, by0))
+
+        # Merge base + overlay and update canvas
         merged = Image.alpha_composite(self.base_img.convert("RGBA"), self.overlay_img)
         w, h = merged.size
-        scaled = merged.resize((int(w*self.scale), int(h*self.scale)), Image.NEAREST)
+        scaled = merged.resize((int(w * self.scale), int(h * self.scale)), Image.NEAREST)
         self.tk_img = ImageTk.PhotoImage(scaled)
         self.canvas.itemconfig(self.canvas_img_id, image=self.tk_img)
         self.canvas.coords(self.canvas_img_id, self.offset_x, self.offset_y)
+
 
     # ---------------- Keybinds ----------------
     def key_handler(self, event):
@@ -264,10 +313,9 @@ class draw_borders:
         merged = Image.alpha_composite(self.base_img.convert("RGBA"), self.overlay_img)
         folder = Path("border_overlays_complete")
         folder.mkdir(exist_ok=True)
-        base_name = Path(self.img_path).stem
+        base_name = ".".join(self.img_path.split(".")[:-1]).split("\\")[1]
         try:
             base_name = str(base_name)
-            base_name = base_name.split("_")[0] + "_" + base_name.split("_")[1]
         except Exception:
             pass
         # Find existing files
@@ -287,7 +335,7 @@ class draw_borders:
             save_path = "border_overlays_complete" + "\\" + f"{base_name}_complete_{max_index+1}.tif"
         merged.convert("RGB").save(save_path, compression="tiff_lzw")        
         self.last_saved_file = str(save_path)
-        MessageDialog(self.parent, "Saved!", f"The Image has been saved in '\\border_overlays_complete' as:\n{save_path.split("\\")[1]}.")
+        MessageDialog(self.parent, "Saved!", f"The Image has been saved in '\\border_overlays_complete' as:\n{str(save_path).split("\\")[1]}.")
 
         
 

@@ -55,25 +55,25 @@ def border_seeking(img, img_name, thr1, thr2, kernel_v, min_grain_size): #this a
     files = [str(f) for f in folder.iterdir() if f.is_file()]
 
     if len(files) == 0:
-        grimg_name = f"border_outlines\\{img_name.split(".")[0]}_borders.tif"
+        grimg_name = f"border_outlines\\{".".join(img_name.split(".")[:-1])}_borders.tif"
 
     else:
         index = 0
         for f in files:
-            if f.split("\\")[1].split("_")[0] == img_name.split(".")[0]:
+            if f.split("\\")[1].split("_")[0] == ".".join(img_name.split(".")[:-1]):
                 try:
-                    temp = int(f.split("_")[3].split(".")[0]) + 1
+                    temp = int(".".join(f.split("_")[3].split(".")[:-1])) + 1
                 except IndexError:
                     index = 1
                     if len(files) == 1: break
                     else: continue    
-                temp = int(f.split("_")[3].split(".")[0]) + 1
+                temp = int(".".join(f.split("_")[3].split(".")[:-1])) + 1
                 if temp > index: index = temp
         
-        if index == 0: grimg_name = f"border_outlines\\{img_name.split(".")[0]}_borders.tif"
-        else: grimg_name = f"border_outlines\\{img_name.split(".")[0]}_borders_{index}.tif"'''
+        if index == 0: grimg_name = f"border_outlines\\{".".join(img_name.split(".")[:-1])}_borders.tif"
+        else: grimg_name = f"border_outlines\\{".".join(img_name.split(".")[:-1])}_borders_{index}.tif"'''
 
     
-    #cv2.imwrite(grimg_name, output, [cv2.IMWRITE_TIFF_COMPRESSION, 1])
+    #cv2.imwrite(grimg_name, output, [cv2.IMWRITE_TIFF_COMPRESSION, 5])
     
     return output#, grimg_name

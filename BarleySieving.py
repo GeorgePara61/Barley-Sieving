@@ -557,7 +557,7 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     if not rerun: exit(-1)
 
     img_name, kernel_g, stdev, conval, tgs_s, d, sc, ss, ksize, blend_strength, gamma, thr1, thr2, kernel_s, min_size, scale, crop = user_inputs[0], user_inputs[1], float(user_inputs[2]), float(user_inputs[3]), user_inputs[4], int(user_inputs[5]), float(user_inputs[6]), float(user_inputs[7]), int(user_inputs[8]), float(user_inputs[9]), float(user_inputs[10]), int(user_inputs[11]), int(user_inputs[12]), (user_inputs[13]), int(user_inputs[14]), user_inputs[15], int(user_inputs[16])
-    analyzed_imgs.append(img_name.split(".")[0])
+    analyzed_imgs.append(".".join(img_name.split(".")[:-1]))
 
     tgs = (int(tgs_s.split(",")[0]),int(tgs_s.split(",")[1]))
     kernel = (int(kernel_s.split(",")[0]),int(kernel_s.split(",")[1]))

@@ -9,7 +9,7 @@ def measure_areas(areas, scale, cutoff, in_px, img_name): #get the areas in real
     sx = scale
     sy = scale
 
-    img_name = img_name.split(".")[0]
+    img_name = ".".join(img_name.split(".")[:-1])
     diams = []
 
     for key in areas: #go through all the grains, calculate the areas and diameters

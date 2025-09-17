@@ -203,7 +203,7 @@ class ScaleCalibrator: #This gets the scale from the image, by drawing a line on
         return self.result
 
 def get_scale(parent, img_name):
-    img_path = f"images/{img_name}"
+    img_path = f"images\\{img_name}"
     calibrator = ScaleCalibrator(parent, img_path)
     parent.wait_window(calibrator.top)
     return calibrator.get_result()
