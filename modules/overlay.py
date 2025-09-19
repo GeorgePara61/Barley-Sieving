@@ -6,7 +6,7 @@ from modules import preproccess
 from pathlib import Path
 
 def overlay_borders(original_img, img_name, img_s, thr1, thr2, kernel_v, min_grain_size, border_mask, 
-                   kernel_gf, stdev, conval, tgs, d, sc, ss, ksize, sobel_blend, gamma, 
+                   kernel_gf, stdev, conval, tgs, d, sc, ss, ksize, sobel_blend, gamma, folder,
                    edge_preserve=True, color=(255, 255, 0), thickness=2): #this overlays the detected borders on the original image or the blurred, and provides sliders to change parameters
     
     # Global variables to track state
@@ -159,16 +159,24 @@ def overlay_borders(original_img, img_name, img_s, thr1, thr2, kernel_v, min_gra
     if blurred:
         show_blur("event")
 
-    folder = Path('border_overlays') #save image
-    files = [str(f) for f in folder.iterdir() if f.is_file()]
+    temp_files = list(folder.glob(f"{".".join(img_name.split(".")[:-1])}_overlay*.tif"))
+
+    files = []
+
+    for file in temp_files:
+        file_t = ".".join(str(file).split(".")[:-1])
+        if file_t.split("_")[-1] == 'complete' or file_t.split("_")[-2] == 'complete': continue
+        files.append(file)
+
 
     if len(files) == 0:
-        grimg_name = f"border_overlays\\{".".join(img_name.split(".")[:-1])}_overlay.tif"
+        grimg_name = f"{str(folder)}\\{".".join(img_name.split(".")[:-1])}_overlay.tif"
 
     else:
         index = 0
         for f in files:
-            if f.split("\\")[1].split("_")[0] == ".".join(img_name.split(".")[:-1]):
+            f = str(f)
+            if f.split("_")[0] == ".".join(img_name.split(".")[:-1]):
                 try:
                     temp = int(".".join(f.split("_")[3].split(".")[:-1])) + 1
                 except IndexError:
@@ -178,8 +186,8 @@ def overlay_borders(original_img, img_name, img_s, thr1, thr2, kernel_v, min_gra
                 temp = int(".".join(f.split("_")[3].split(".")[:-1])) + 1
                 if temp > index: index = temp
         
-        if index == 0: grimg_name = f"border_overlays\\{".".join(img_name.split(".")[:-1])}_overlay.tif"
-        else: grimg_name = f"border_overlays\\{".".join(img_name.split(".")[:-1])}_overlay_{index}.tif"
+        if index == 0: grimg_name = f"{str(folder)}\\{".".join(img_name.split(".")[:-1])}_overlay.tif"
+        else: grimg_name = f"{str(folder)}\\{".".join(img_name.split(".")[:-1])}_overlay_{index}.tif"
     
     cv2.imwrite(grimg_name, overlay, [cv2.IMWRITE_TIFF_COMPRESSION, 5])
     

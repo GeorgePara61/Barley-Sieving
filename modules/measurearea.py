@@ -1,7 +1,7 @@
 import numpy as np
 from pathlib import Path
 
-def measure_areas(areas, scale, cutoff, in_px, img_name): #get the areas in real length units and calculate the diameters
+def measure_areas(areas, scale, cutoff, in_px, img_name, folder): #get the areas in real length units and calculate the diameters
     total = 0
     totarea = 0
     totdiam = 0
@@ -28,11 +28,10 @@ def measure_areas(areas, scale, cutoff, in_px, img_name): #get the areas in real
 
     #here save the area and diameter data in csv files
 
-    folder = Path('grain_surfaces_diameters')
     files = [str(f) for f in folder.iterdir() if f.is_file()]
     
     #if len(files) == 0:
-    file_s = f"grain_surfaces_diameters\\{img_name}_surfaces_diameters.csv"
+    file_s = f"{str(folder)}\\{img_name}_surfaces_diameters.csv"
 
     with open(file_s, 'w') as output_s:
         output_s.write("Index,Area,Diameter\n")

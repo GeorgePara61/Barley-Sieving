@@ -480,7 +480,7 @@ def generate_tutorial_GUI(parent):
     global guidn
     guidn += 1
 
-    guide = {1: "Welcome!\nThis application allows for a partial grain boundary identification. It cannot find all the grain boundaries by itself, so user input through drawing is required to close them.\nThe structure consists of a chain of popup windows. When there is no obvious way to exit a window (button, mentioned keybind) close the window via the window's X top right. To use the keybinds, switch the keyboard language to english.\nNow the parameter input will follow. A picture can be selected, some settings (scale, crop) can be configured and the parameters for the program's functions can be entered. The parameters can be changed later.\nIf you'd like to stop getting tutorials at any point, press 'Close Guides'. Else, press 'Continue'.",
+    guide = {1: "Welcome!\nThis application allows for a partial grain boundary identification. It cannot find all the grain boundaries by itself, so user input through drawing is required to close them.\nThe structure consists of a chain of popup windows. When there is no obvious way to exit a window (button, mentioned keybind) close the window via the window's X top right. To use the keybinds, switch the keyboard language to english.\nNow the parameter input will follow. A picture can be selected, some settings (scale, crop) can be configured and the parameters for the program's functions can be entered. The parameters can be changed later. ALWAYS choose the image you are going to work on, even if you just skip to the drawing part to draw on an already drawn on image (if you don't select the image the erase tool won't work properly).\nIf you'd like to stop getting tutorials at any point, press 'Close Guides'. Else, press 'Continue'.",
              2: "Now you'll enter the scale. The scaling factor is acquired by drawing a line (left click + drag) on the scale bar of the image and inputting the real length of that bar (press Set Length on the bottom left). Then the division (real length (units))/(line length (pixels)) gives the scaling factor. Pressing shift locks the line horizontally. Panning the image (right click + drag) and zooming is also available (bottom left). Press accept on the bottom right to continue. The info bar might not show up when the window opens, so pan the image in that case.", 
              3: "Now you'll get a preview of the borders the program found overlayed on the image. You can change certain parameters to improve what was found. Press Generate to apply changes from the right hand sliders (the bottom ones update automatically). Press switch to preview the blurred image. When done, press X.\nBEWARE!!! Always press Generate before moving on to send the found overlays to the drawing sagment.", 
              4: "Now you'll draw on the image with the found borders to complete the borders and erase noise. Keybinds:\n1) Drawing (d), where a yellow line is drawn by holding down the left mouse button.\n2) Erasing (e), which erases yellow lines by holding down the left mouse button.\n3) Undo (u)\n4) Redo (r)\n5) Increasing (+) or decreasing (-) line thickness.\n6) Zooming in and out (scrollwheel or trackpad)\n7) Panning (by holding down the right mouse button)\n8) Saving the image (s).\n9) Quitting drawing (q).\nBEWARE!! Quitting (q) does NOT save the image.",
@@ -563,6 +563,9 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     kernel = (int(kernel_s.split(",")[0]),int(kernel_s.split(",")[1]))
     kernel_gf = (int(kernel_g.split(",")[0]), int(kernel_g.split(",")[0]))
 
+    folder_path = Path(f"reports\\{".".join(img_name.split(".")[:-1])}")
+    folder_path.mkdir(parents = True, exist_ok = True)
+
     if scale == '-': 
         if getguides: generate_tutorial_GUI(root)
         scale = scaling.get_scale(root, img_name) #this opens a window where the user draws a line on the scale bar to get the scale
@@ -575,7 +578,7 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
         img_path = f"images\\{img_name}"
         img = cv2.imread(img_path)
     
-    grayed, grayed_name = grayconv.grayscale_converter(img, img_name) #this converts the cropped image to grayscale and saves it
+    grayed = grayconv.grayscale_converter(img, img_name) #this converts the cropped image to grayscale and saves it
     preproccessed = preproccess.img_prep(grayed, kernel_gf, stdev, conval, tgs, d, sc, ss, ksize, blend_strength, gamma) #preproccessing of the image
 
     #print(f"Η εικόνα χωρίς την κάρτα πληροφοριών αποθηκεύτηκε ως {grayed_name.split("\\")[1]} στον φάκελο {grayed_name.split("\\")[0]}.")
@@ -583,15 +586,15 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     outline_img = findborders.border_seeking(preproccessed, img_name, thr1, thr2, kernel, min_size) #this finds the borders
 
     if getguides: generate_tutorial_GUI(root)
-    overlay_img, overimg_name, user_inputs[11], user_inputs[12], user_inputs[1], user_inputs[2], user_inputs[3], user_inputs[4], user_inputs[5], user_inputs[6], user_inputs[7], user_inputs[8], user_inputs[9], user_inputs[10] = overlay.overlay_borders(grayed, img_name, preproccessed, thr1, thr2, kernel, min_size, outline_img, kernel_g.split(",")[0], stdev, conval, tgs_s.split(",")[0], d, sc, ss, ksize, blend_strength, gamma) #this overlays the detected borders to the original. Sliders that can change the different parameters exist
+    overlay_img, overimg_name, user_inputs[11], user_inputs[12], user_inputs[1], user_inputs[2], user_inputs[3], user_inputs[4], user_inputs[5], user_inputs[6], user_inputs[7], user_inputs[8], user_inputs[9], user_inputs[10] = overlay.overlay_borders(grayed, img_name, preproccessed, thr1, thr2, kernel, min_size, outline_img, kernel_g.split(",")[0], stdev, conval, tgs_s.split(",")[0], d, sc, ss, ksize, blend_strength, gamma, folder_path) #this overlays the detected borders to the original. Sliders that can change the different parameters exist
 
-    print(f"Η εικόνα των συνώρων αποθηκεύτηκε ως {overimg_name.split("\\")[1]} στον φάκελο {overimg_name.split("\\")[0]}.")
+    print(f"Η εικόνα των συνώρων αποθηκεύτηκε ως {overimg_name.split("\\")[2]} στον φάκελο {"\\".join(overimg_name.split("\\")[:-1])}.")
 
     if getguides: generate_tutorial_GUI(root)
     generate_draw_GUI(root, overimg_name) #this gui requests the name of the image to draw on. The image the program was just working on is default, but it takes any image in \border_overlays and \border_overlays_complete
 
     print("Draw Keybinds:\nDraw: d\nErase: e\nIcrease line thickness: +\nDecrease line thickness: -\nUndo: u\nRedo: r\nSave: s\nQuit: q")
-    draw = completeborders.draw_borders(root, overimg_name, grayed) #user drawn borders
+    draw = completeborders.draw_borders(root, overimg_name, grayed, folder_path) #user drawn borders
     root.wait_window(draw.win)
     overfinal_name = draw.last_saved_file
 
@@ -635,13 +638,13 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
 
         final_mask, measure = finalmask.create_binary_mask(overfinal_name, kernel) #finallized white grains - black borders image
         if measure: 
-            areas, grains, labels =  getareas.measure_grain_area(final_mask, cutoff, in_px) #get grain areas in px
+            areas, grains, labels =  getareas.measure_grain_area(final_mask, cutoff, in_px, scale) #get grain areas in px
             px_areas = areas.copy()
             print(f"Found {grains} grains.")
-            mean, diams, mean_d = measurearea.measure_areas(areas, scale, cutoff, in_px, img_name) #get grain areas in μm^2 and diameters
-            bin.bin_diameters(diams, iter, img_name) #bin diameters
+            mean, diams, mean_d = measurearea.measure_areas(areas, scale, cutoff, in_px, img_name, folder_path) #get grain areas in μm^2 and diameters
+            bin.bin_diameters(diams, iter, img_name, folder_path) #bin diameters
 
-            report1, aspect_ratios = directionalityanalysis.analyze_directionality(labels, px_areas, areas, scale, img_name) #get grain directions and aspect ratios
+            report1, aspect_ratios = directionalityanalysis.analyze_directionality(labels, px_areas, areas, scale, img_name, folder_path) #get grain directions and aspect ratios
             aspect_ratios_all = aspect_ratios_all + aspect_ratios
 
         

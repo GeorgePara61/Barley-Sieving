@@ -4,7 +4,7 @@ from tqdm import tqdm
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def analyze_directionality(label_map, px_area_dict, area_dict, scale, img_name): #fits ellipses, saves data, makes an aspect ratio histogram and an orientation radar diagram
+def analyze_directionality(label_map, px_area_dict, area_dict, scale, img_name, folder): #fits ellipses, saves data, makes an aspect ratio histogram and an orientation radar diagram
     grain_properties = []
     unique_labels = np.unique(label_map)
     unique_labels = unique_labels[unique_labels != 0]
@@ -120,7 +120,7 @@ def analyze_directionality(label_map, px_area_dict, area_dict, scale, img_name):
 
     print(df_grains)
 
-    out_name = 'directionality_results/' + img_name.split('.')[0] + "_directionality.csv"
+    out_name = str(folder) + "\\" + ".".join(img_name.split('.')[:-1]) + "_directionality.csv"
     df_grains.to_csv(out_name, index=False) #save the properties
 
     #the following organizes the aspect ratios in bins or lenght 0.25 for the histogram

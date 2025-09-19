@@ -5,7 +5,7 @@ def grayscale_converter(img, img_name): #make the image grayscale (in case it is
 
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    folder = Path('grain_images')
+    '''folder = Path('grain_images')
     files = [str(f) for f in folder.iterdir() if f.is_file()]
 
     if len(files) == 0:
@@ -25,8 +25,8 @@ def grayscale_converter(img, img_name): #make the image grayscale (in case it is
                 if temp > index: index = temp
         
         if index == 0: grimg_name = f"grain_images\\{".".join(img_name.split(".")[:-1])}_grains.jpg"
-        else: grimg_name = f"grain_images\\{".".join(img_name.split(".")[:-1])}_grains_{index}.jpg"
+        else: grimg_name = f"grain_images\\{".".join(img_name.split(".")[:-1])}_grains_{index}.jpg"'''
         
     #cv2.imwrite(grimg_name, gray)
 
-    return gray, grimg_name
+    return gray

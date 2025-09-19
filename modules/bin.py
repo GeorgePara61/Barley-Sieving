@@ -1,6 +1,6 @@
 from pathlib import Path
 
-def bin_diameters(diameters, iter, img_name): #this function handles data bining
+def bin_diameters(diameters, iter, img_name, folder): #this function handles data bining
 
     counts = {} #suppose you want to find the number n of measurements in (x1, x2). This dict stores data like this -> x1: n
     hist_bins = []
@@ -19,26 +19,25 @@ def bin_diameters(diameters, iter, img_name): #this function handles data bining
                 counts[curr_step] += 1
 
     #the following algorithm finds the index the file should have. if the previous file is named testX_diameters_56.csv this will output testX_diameters_57.csv
-    folder = Path('diameters_binned')
-    files = [str(f) for f in folder.iterdir() if f.is_file()]
-    
+    files = list(folder.glob(f"{".".join(img_name.split(".")[:-1])}_diameters_binned*.tif"))
+
     if len(files) == 0:
-        file_d = f"diameters_binned\\{img_name}_diameters_binned.csv"
+        file_d = f"{str(folder)}\\{img_name}_diameters_binned.csv"
     else:
         index = 0
         for f in files:
-            if f.split("\\")[1].split("_")[0] == img_name:
+            if f.split("_")[0] == img_name:
                 try:
                     temp = int(".".join(f.split("_")[-1].split(".")[:-1])) + 1
                 except ValueError:
                     index = 1
                     if len(files) == 1: break
                     else: continue    
-                temp = int(f.split("_")[-1].int(".".join(f.split("_")[-1].split(".")[:-1])) + 1) + 1
+                temp = (int(".".join(f.split("_")[-1].split(".")[:-1])) + 1) + 1
                 if temp > index: index = temp
 
-        if index == 0: file_d = f"diameters_binned\\{img_name}_diameters_binned.csv"
-        else: file_d = f"diameters_binned\\{img_name}_diameters_binned_{index}.csv"
+        if index == 0: file_d = f"{str(folder)}\\{img_name}_diameters_binned.csv"
+        else: file_d = f"{str(folder)}\\{img_name}_diameters_binned_{index}.csv"
 
     with open(file_d, "w") as output: #write the output file
         output.write("Diameter Range,Frequency\n")
@@ -46,6 +45,6 @@ def bin_diameters(diameters, iter, img_name): #this function handles data bining
         for key in counts:
             output.write(f"{key},{counts[key]}\n")
 
-        print(f"Τα οργανωμένα κατα διαστήματα δεδομένα ακτίνας αποθηκεύτηκαν με όνομα: {file_d}")
+        print(f"Τα οργανωμένα κατα διαστήματα δεδομένα ακτίνας αποθηκεύτηκαν με όνομα: {file_d.split("\\")[2]} στον φάκελο {"\\".join(file_d.split("\\")[:-1])}")
 
     return

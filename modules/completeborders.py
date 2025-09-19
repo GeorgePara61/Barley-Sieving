@@ -7,7 +7,7 @@ from pathlib import Path
 import copy
 
 class draw_borders:
-    def __init__(self, parent, img_path,img_original):
+    def __init__(self, parent, img_path, img_original, folder):
         self.parent = parent
         self.win = tk.Toplevel(parent)
         self.win.title("Draw Missing Borders")
@@ -16,6 +16,8 @@ class draw_borders:
 
         # Load base image
         cv_img = cv2.imread(img_path, cv2.IMREAD_COLOR)
+        if img_path.split("_")[-1] == 'complete.tif' or img_path.split("_")[-2] == 'complete':
+            cv_img = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
         self.original_img = Image.fromarray(img_original)
         self.base_img = Image.fromarray(cv_img)
         self.overlay_img = Image.new("RGBA", self.base_img.size, (0,0,0,0))
@@ -75,6 +77,7 @@ class draw_borders:
 
         self.img_path = img_path
         self.last_saved_file = None
+        self.folder = folder
 
 
     # ---------------- Drawing ----------------
@@ -311,14 +314,17 @@ class draw_borders:
     # ---------------- Save ----------------
     def save_image(self):
         merged = Image.alpha_composite(self.base_img.convert("RGBA"), self.overlay_img)
-        folder = Path("border_overlays_complete")
-        folder.mkdir(exist_ok=True)
-        base_name = ".".join(self.img_path.split(".")[:-1]).split("\\")[1]
+        base_name = ".".join(self.img_path.split(".")[:-1]).split("\\")[2]
+        if base_name.split("_")[-1] == 'complete': base_name = '_'.join(base_name.split("_")[:-1])
+        elif base_name.split("_")[-1].isdigit(): 
+            if base_name.split("_")[-2] == 'complete':
+                base_name = '_'.join(base_name.split("_")[:-2])
         try:
             base_name = str(base_name)
         except Exception:
             pass
         # Find existing files
+        folder = self.folder
         existing_files = list(folder.glob(f"{base_name}_complete*.tif"))
         if not existing_files:
             save_path = folder / f"{base_name}_complete.tif"
@@ -332,10 +338,10 @@ class draw_borders:
                     idx = int(parts[-1])
                     if idx > max_index:
                         max_index = idx
-            save_path = "border_overlays_complete" + "\\" + f"{base_name}_complete_{max_index+1}.tif"
+            save_path = str(folder) + "\\" + f"{base_name}_complete_{max_index+1}.tif"
         merged.convert("RGB").save(save_path, compression="tiff_lzw")        
         self.last_saved_file = str(save_path)
-        MessageDialog(self.parent, "Saved!", f"The Image has been saved in '\\border_overlays_complete' as:\n{str(save_path).split("\\")[1]}.")
+        MessageDialog(self.parent, "Saved!", f"The Image has been saved in {str(folder)} as:\n{str(save_path).split("\\")[2]}.")
 
         
 
