@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def merge(analyzed_imgs, bin_cnt, aspect_ratios, folder): #this merges the surface and diameter data from all images analyzed and bins diameter data
+def merge(analyzed_imgs, bin_cnt, aspect_ratios): #this merges the surface and diameter data from all images analyzed and bins diameter data
 
     def read_data(cmn_name, num): #reads data for each image
 
         #inter = input()
         cutoff = 0
-        filename = str(folder) + "\\" + cmn_name + str(num) + '_surfaces_diameters.csv'
+        filename = "reports" + "\\" + cmn_name + str(num) + "\\" + cmn_name + str(num) + '_surfaces_diameters.csv'
 
         total = 0
         totarea = 0

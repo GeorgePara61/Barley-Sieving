@@ -369,7 +369,12 @@ def generate_pre_measure_GUI(parent, folder): #generate a gui to confirm area me
 
 
     try: #this imputs previous data
-        img_sel.set(measure_inputs.pop(0))
+        try:
+            temp = measure_inputs[0].split("\\")[2]
+        except IndexError:
+            temp = measure_inputs[0]
+        img_sel.set(temp)
+        measure_inputs.pop(0)
         entry2.insert(0, measure_inputs.pop(0))
         entry3.insert(0, measure_inputs.pop(0))
         entry4.insert(0, measure_inputs.pop(0))
@@ -609,7 +614,7 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
 
     if overfinal_name != None: print(f"Η εικόνα των ολοκληρωμένων συνώρων αποθηκεύτηκε ως {overfinal_name.split("\\")[1]} στον φάκελο {overfinal_name.split("\\")[0]}.")
 
-    if overfinal_name == None: overfinal_name = 'Enter Image name or press SKIP' #if the user didn't save an image from the draw phase, the program requests an image from border_overlays_complete
+    if overfinal_name == None: overfinal_name = 'Select Image or press SKIP' #if the user didn't save an image from the draw phase, the program requests an image from border_overlays_complete
     if scale == None: 
         scale == 'Input scale in μm/px'
         cutoff = 'Input in px ONLY!!'
@@ -665,4 +670,4 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
 
 if len(analyzed_imgs) > 1: generate_merge_promt_GUI(root)
 
-if merge == True: merging.merge(analyzed_imgs, iter, aspect_ratios_all, folder_path) #merge surface and diameters, bin diameters, show total aspect ratios histogram
+if merge == True: merging.merge(analyzed_imgs, iter, aspect_ratios_all) #merge surface and diameters, bin diameters, show total aspect ratios histogram
