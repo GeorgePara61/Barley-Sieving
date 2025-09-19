@@ -322,7 +322,7 @@ def generate_info_GUI(parent): #generate a gui detailing the parameters asked in
     win.grab_set()
     win.wait_window()
 
-def generate_pre_measure_GUI(parent): #generate a gui to confirm area measurement, and input the number of histogram bins and minimum grain size
+def generate_pre_measure_GUI(parent, folder): #generate a gui to confirm area measurement, and input the number of histogram bins and minimum grain size
     win = tk.Toplevel(parent)
     win.title(f"Grain Size Calculator - Measuring Parameters")
 
@@ -335,9 +335,13 @@ def generate_pre_measure_GUI(parent): #generate a gui to confirm area measuremen
     small_font = tkFont.Font(family="Segoe UI", size=7, weight="normal")
 
     tk.Label(win, text="Complete Picture Name").grid(row=0, column=0, columnspan=6, sticky="w", padx=10, pady=(10, 0))
-    entry1 = tk.Entry(win, width=81)
-    entry1.grid(row=2, column=0, columnspan=6, padx=10, pady=5)
-    tk.Label(win, text="Should be located in \\border_overlays_complete", font = small_font).grid(row=1, column=0, columnspan= 6, sticky = "w", padx=10, pady=0)
+    images_in = list(folder.glob(f"{".".join(img_name.split(".")[:-1])}_overlay_complete*.tif"))
+    images = []
+    for img in images_in: images.append(str(img).split("\\")[2])
+    img_sel = ttk.Combobox(win,values = images, width = 81)
+    img_sel.grid(row=2, column=0, columnspan=6, padx=10, pady=5)  # Default value
+    img_sel.bind('<Button-1>', lambda e: img_sel.event_generate('<Down>'))
+    tk.Label(win, text="Should end in _complete_{index}.tif", font = small_font).grid(row=1, column=0, columnspan= 6, sticky = "w", padx=10, pady=0)
 
     tk.Label(win, text="1) measure Parameters").grid(row=4, column=0, columnspan=6, sticky="w", padx=10)
     tk.Label(win, text="Grain Min Diameter (μm or px):", font = small_font, pady=0).grid(row=5, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
@@ -365,7 +369,7 @@ def generate_pre_measure_GUI(parent): #generate a gui to confirm area measuremen
 
 
     try: #this imputs previous data
-        entry1.insert(0, measure_inputs.pop(0))
+        img_sel.set(measure_inputs.pop(0))
         entry2.insert(0, measure_inputs.pop(0))
         entry3.insert(0, measure_inputs.pop(0))
         entry4.insert(0, measure_inputs.pop(0))
@@ -375,7 +379,7 @@ def generate_pre_measure_GUI(parent): #generate a gui to confirm area measuremen
         pass
 
     def on_measure(event=None): #read the parameters and start working
-        measure_inputs.append(entry1.get())
+        measure_inputs.append(str(folder) + "\\" + img_sel.get())
         measure_inputs.append(entry2.get())
         measure_inputs.append(entry3.get())
         measure_inputs.append(entry4.get())
@@ -409,7 +413,7 @@ def generate_pre_measure_GUI(parent): #generate a gui to confirm area measuremen
     win.wait_window()
 
 
-def generate_draw_GUI(parent, img_name): #generate a gui to give option to draw on an image
+def generate_draw_GUI(parent, img_name, folder, img_name_or): #generate a gui to give option to draw on an image
     win = tk.Toplevel(parent)
     win.title(f"Grain Size Calculator - Drawing Image Selection")
 
@@ -422,17 +426,22 @@ def generate_draw_GUI(parent, img_name): #generate a gui to give option to draw 
     small_font = tkFont.Font(family="Segoe UI", size=7, weight="normal")
 
     tk.Label(win, text="Select Which Image to draw on").grid(row=0, column=0, columnspan=6, sticky="w", padx=10, pady=(10, 0))
-    entry1 = tk.Entry(win, width=40) #the user can choose previous images as well
-    entry1.grid(row=2, column=0, columnspan=6, padx=10, pady=5)
-    tk.Label(win, text="Should be located in \\border_overlays_complete or in \\border_overlays", font = small_font).grid(row=1, column=0, columnspan= 6, sticky = "w", padx=10, pady=0)
+    images_in = list(folder.glob(f"{".".join(img_name_or.split(".")[:-1])}_overlay*.tif"))
+    images = []
+    for img in images_in: images.append(str(img).split("\\")[2])
+    img_sel = ttk.Combobox(win,values = images, width = 40)
+    img_sel.grid(row=2, column=0, columnspan=6, padx=10, pady=5)  # Default value
+    img_sel.bind('<Button-1>', lambda e: img_sel.event_generate('<Down>'))
+
+    tk.Label(win, text="Should be an overlay or complete overlay", font = small_font).grid(row=1, column=0, columnspan= 6, sticky = "w", padx=10, pady=0)
 
 
-    entry1.insert(0, img_name)
+    img_sel.set(img_name.split("\\")[2])
 
 
     def on_confirm(event=None): #read the parameters and start working
         global overimg_name
-        overimg_name = entry1.get()
+        overimg_name = str(folder) + "\\" + img_sel.get()
         win.destroy()
     
 
@@ -591,7 +600,7 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     print(f"Η εικόνα των συνώρων αποθηκεύτηκε ως {overimg_name.split("\\")[2]} στον φάκελο {"\\".join(overimg_name.split("\\")[:-1])}.")
 
     if getguides: generate_tutorial_GUI(root)
-    generate_draw_GUI(root, overimg_name) #this gui requests the name of the image to draw on. The image the program was just working on is default, but it takes any image in \border_overlays and \border_overlays_complete
+    generate_draw_GUI(root, overimg_name, folder_path, img_name) #this gui requests the name of the image to draw on. The image the program was just working on is default, but it takes any image in \border_overlays and \border_overlays_complete
 
     print("Draw Keybinds:\nDraw: d\nErase: e\nIcrease line thickness: +\nDecrease line thickness: -\nUndo: u\nRedo: r\nSave: s\nQuit: q")
     draw = completeborders.draw_borders(root, overimg_name, grayed, folder_path) #user drawn borders
@@ -615,7 +624,7 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     measure_inputs.append(str(iter))
 
     if getguides: generate_tutorial_GUI(root)
-    generate_pre_measure_GUI(root)
+    generate_pre_measure_GUI(root, folder_path)
 
     if scale == None: in_px = True
 
@@ -656,4 +665,4 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
 
 if len(analyzed_imgs) > 1: generate_merge_promt_GUI(root)
 
-if merge == True: merging.merge(analyzed_imgs, iter, aspect_ratios_all) #merge surface and diameters, bin diameters, show total aspect ratios histogram
+if merge == True: merging.merge(analyzed_imgs, iter, aspect_ratios_all, folder_path) #merge surface and diameters, bin diameters, show total aspect ratios histogram

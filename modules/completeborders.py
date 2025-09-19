@@ -319,6 +319,7 @@ class draw_borders:
         elif base_name.split("_")[-1].isdigit(): 
             if base_name.split("_")[-2] == 'complete':
                 base_name = '_'.join(base_name.split("_")[:-2])
+            else: base_name = '_'.join(base_name.split("_")[:-1])
         try:
             base_name = str(base_name)
         except Exception:

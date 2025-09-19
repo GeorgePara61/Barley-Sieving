@@ -165,25 +165,24 @@ def overlay_borders(original_img, img_name, img_s, thr1, thr2, kernel_v, min_gra
 
     for file in temp_files:
         file_t = ".".join(str(file).split(".")[:-1])
-        if file_t.split("_")[-1] == 'complete' or file_t.split("_")[-2] == 'complete': continue
-        files.append(file)
-
-
+        if not (file_t.split("_")[-1] == 'complete' or (file_t.split("_")[-1].isdigit() and file_t.split("_")[-2] == 'complete')):
+            files.append(file)
+            
     if len(files) == 0:
         grimg_name = f"{str(folder)}\\{".".join(img_name.split(".")[:-1])}_overlay.tif"
 
     else:
         index = 0
         for f in files:
-            f = str(f)
+            f = str(f).split("\\")[2]
             if f.split("_")[0] == ".".join(img_name.split(".")[:-1]):
                 try:
-                    temp = int(".".join(f.split("_")[3].split(".")[:-1])) + 1
-                except IndexError:
+                    temp = int(".".join(f.split("_")[-1].split(".")[:-1])) + 1
+                except Exception:
                     index = 1
                     if len(files) == 1: break
                     else: continue    
-                temp = int(".".join(f.split("_")[3].split(".")[:-1])) + 1
+                temp = int(".".join(f.split("_")[-1].split(".")[:-1])) + 1
                 if temp > index: index = temp
         
         if index == 0: grimg_name = f"{str(folder)}\\{".".join(img_name.split(".")[:-1])}_overlay.tif"

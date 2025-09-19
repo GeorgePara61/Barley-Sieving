@@ -20,7 +20,6 @@ def measure_areas(areas, scale, cutoff, in_px, img_name, folder): #get the areas
         totarea += area
         diam = float(np.sqrt((area*4)/np.pi))
         totdiam += diam
-        print(f"Grain No. {key} has an area of {round(area, 2)} μm² and diameter {round(diam, 2)} μm")
         diams.append(diam)
         areas[key] = area
 
