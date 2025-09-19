@@ -89,6 +89,9 @@ def merge(analyzed_imgs, bin_cnt, aspect_ratios): #this merges the surface and d
     bin_name = "-"
     bin_count = bin_cnt
 
+    if nums == []:
+        for i in range(1, len(analyzed_imgs)): nums.append(i)
+
     totdiams= []
     totareas = []
 
