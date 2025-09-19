@@ -114,7 +114,7 @@ def merge(analyzed_imgs, bin_cnt, aspect_ratios): #this merges the surface and d
 
     i = 1
     with open(file_out_diams, 'w') as diameter_output: #store the merged data
-        diameter_output.write("Index,Area,Diameter")
+        diameter_output.write("Index,Area,Diameter\n")
         for area, diam in zip(totareas, totdiams):
             diameter_output.write(f"{i},{area},{diam}\n")
             i += 1
