@@ -79,6 +79,78 @@ class draw_borders:
         self.last_saved_file = None
         self.folder = folder
 
+    def smooth_line(self, points, steps=20):
+        """Generate smooth points from Catmull–Rom spline."""
+        if len(points) < 4:
+            return points
+
+        smooth = []
+        for i in range(1, len(points) - 2):
+            p0, p1, p2, p3 = points[i-1], points[i], points[i+1], points[i+2]
+            for t in [j/steps for j in range(steps+1)]:
+                x = 0.5 * ((2*p1[0]) +
+                        (-p0[0] + p2[0]) * t +
+                        (2*p0[0] - 5*p1[0] + 4*p2[0] - p3[0]) * t*t +
+                        (-p0[0] + 3*p1[0] - 3*p2[0] + p3[0]) * t*t*t)
+                y = 0.5 * ((2*p1[1]) +
+                        (-p0[1] + p2[1]) * t +
+                        (2*p0[1] - 5*p1[1] + 4*p2[1] - p3[1]) * t*t +
+                        (-p0[1] + 3*p1[1] - 3*p2[1] + p3[1]) * t*t*t)
+                smooth.append((x, y))
+        return smooth
+
+    def _apply_stroke_to_overlay(self, stroke):
+        """Replay a stroke on the overlay (for redraws)."""
+        if stroke["mode"] == "draw":
+            draw = ImageDraw.Draw(self.overlay_img)
+            points = stroke["points"]
+            if len(points) > 1:
+                smooth_points = self.smooth_line(points, steps=20)
+                for i in range(len(smooth_points) - 1):
+                    draw.line(
+                        [smooth_points[i], smooth_points[i + 1]],
+                        fill=stroke["color"],
+                        width=stroke["thickness"]
+                    )
+
+
+        elif stroke["mode"] == "erase":
+            size = stroke["thickness"]
+            points = stroke["points"]
+            for i in range(1, len(points)):
+                x0 = int(max(0, points[i][0] - size / 2))
+                y0 = int(max(0, points[i][1] - size / 2))
+                x1 = int(min(self.base_img.width, points[i][0] + size / 2))
+                y1 = int(min(self.base_img.height, points[i][1] + size / 2))
+                region = self.original_img.crop((x0, y0, x1, y1))
+                self.overlay_img.paste(region, (x0, y0))
+
+
+    def _apply_stroke_to_base(self, stroke):
+        """Flatten a stroke into the base image permanently."""
+        if stroke["mode"] == "draw":
+            draw = ImageDraw.Draw(self.base_img)
+            points = stroke["points"]
+            if len(points) > 1:
+                smooth_points = self.smooth_line(points, steps=20)
+                for i in range(len(smooth_points) - 1):
+                    draw.line(
+                        [smooth_points[i], smooth_points[i + 1]],
+                        fill=stroke["color"],
+                        width=stroke["thickness"]
+                    )
+
+
+        elif stroke["mode"] == "erase":
+            size = stroke["thickness"]
+            points = stroke["points"]
+            for i in range(1, len(points)):
+                x0 = int(max(0, points[i][0] - size / 2))
+                y0 = int(max(0, points[i][1] - size / 2))
+                x1 = int(min(self.base_img.width, points[i][0] + size / 2))
+                y1 = int(min(self.base_img.height, points[i][1] + size / 2))
+                region = self.original_img.crop((x0, y0, x1, y1))
+                self.base_img.paste(region, (x0, y0))
 
     # ---------------- Drawing ----------------
     def start_draw(self, event):
@@ -105,90 +177,89 @@ class draw_borders:
         x = (event.x - self.offset_x) / self.scale
         y = (event.y - self.offset_y) / self.scale
 
-        # Avoid long jumps on first move
         if self.prev_x is None:
             self.prev_x, self.prev_y = x, y
-            # Ensure current_stroke exists
-            if self.current_stroke is None:
-                self.current_stroke = {
-                    "points": [(x, y)],
-                    "mode": self.mode,
-                    "color": self.draw_color if self.mode == "draw" else None,
-                    "thickness": self.line_thickness
-                }
-            else:
-                self.current_stroke["points"].append((x, y))
             self.stroke_points.append((x, y))
+            self.current_stroke["points"].append((x, y))
             return
 
-        # Ensure current_stroke exists (safety)
-        if self.current_stroke is None:
-            self.current_stroke = {
-                "points": [(self.prev_x, self.prev_y)],
-                "mode": self.mode,
-                "color": self.draw_color if self.mode == "draw" else None,
-                "thickness": self.line_thickness
-            }
-
-        # Append the immediate sample (sparse) to stroke_points
+        # Append the new point
         self.stroke_points.append((x, y))
 
         if self.mode == "draw":
-            # Record the point in the stroke
             self.current_stroke["points"].append((x, y))
-            # Live draw the segment between prev and current
             draw_obj = ImageDraw.Draw(self.overlay_img)
-            draw_obj.line(
-                [self.prev_x, self.prev_y, x, y],
-                fill=self.current_stroke["color"],
-                width=self.current_stroke["thickness"],
-                joint="curve"
-            )
+            points = self.current_stroke["points"]
+
+            # Use the last 4 points for smoothing
+            if len(points) > 3:
+                smooth_points = self.smooth_line(points[-4:], steps=20)
+                for i in range(len(smooth_points)-1):
+                    draw_obj.line(
+                        [smooth_points[i], smooth_points[i+1]],
+                        fill=self.current_stroke["color"],
+                        width=self.current_stroke["thickness"]
+                    )
+            else:
+                # fallback: draw simple line segment
+                draw_obj.line(
+                    [points[-2], points[-1]],
+                    fill=self.current_stroke["color"],
+                    width=self.current_stroke["thickness"]
+                )
 
         elif self.mode == "erase":
-            # Interpolate along the last segment for continuous erase,
-            # paste live and ALSO record the dense points into current_stroke
             size = self.line_thickness
             dx = x - self.prev_x
             dy = y - self.prev_y
             num_steps = int(max(abs(dx), abs(dy))) or 1
-            for i in range(num_steps + 1):
+            for i in range(num_steps+1):
                 xi = self.prev_x + dx * i / num_steps
                 yi = self.prev_y + dy * i / num_steps
-
-                # record dense point into stroke so redo can replay exactly
                 self.current_stroke["points"].append((xi, yi))
 
-                # paste original pixels for live erase preview
-                x0 = int(max(0, xi - size / 2))
-                y0 = int(max(0, yi - size / 2))
-                x1 = int(min(self.base_img.width, xi + size / 2))
-                y1 = int(min(self.base_img.height, yi + size / 2))
+                x0 = int(max(0, xi - size/2))
+                y0 = int(max(0, yi - size/2))
+                x1 = int(min(self.base_img.width, xi + size/2))
+                y1 = int(min(self.base_img.height, yi + size/2))
                 if x1 > x0 and y1 > y0:
                     region = self.original_img.crop((x0, y0, x1, y1))
                     self.overlay_img.paste(region, (x0, y0))
 
-        # Update previous point
         self.prev_x, self.prev_y = x, y
 
-        # Live merge & show
-        merged = Image.alpha_composite(self.base_img.convert("RGBA"), self.overlay_img)
-        w, h = merged.size
-        scaled = merged.resize((int(w * self.scale), int(h * self.scale)), Image.NEAREST)
+        # Live merge and show
+        base_rgba = self.base_img.convert("RGBA")
+        if self.overlay_img.mode != "RGBA" or self.overlay_img.size != base_rgba.size:
+            self.overlay_img = base_rgba.copy()
+        merged = Image.alpha_composite(base_rgba, self.overlay_img)
+        scaled = merged.resize((int(merged.width * self.scale), int(merged.height * self.scale)), Image.NEAREST)
         self.tk_img = ImageTk.PhotoImage(scaled)
         self.canvas.itemconfig(self.canvas_img_id, image=self.tk_img)
         self.canvas.coords(self.canvas_img_id, self.offset_x, self.offset_y)
 
+    def end_draw(self, event=None):
+        """Finalize the stroke and add it to history."""
+        if not self.drawing:
+            return
 
-    def end_draw(self, event):
-        """Call on mouse button release to end the current stroke."""
-        if self.current_stroke:
-            self.strokes.append(self.current_stroke)
-            self.redo_stack.clear()
         self.drawing = False
-        self.prev_x, self.prev_y = None, None
-        self.stroke_points = []
+        if self.current_stroke and len(self.current_stroke["points"]) > 1:
+            # Save stroke
+            self.strokes.append(self.current_stroke)
+            self.redo_stack.clear()  # new stroke clears redo
+
+            # Cap stroke history to last 10
+            if len(self.strokes) > 10:
+                # Take the oldest stroke and flatten it
+                old_stroke = self.strokes.pop(0)
+                self._apply_stroke_to_base(old_stroke)
+
         self.current_stroke = None
+        self.stroke_points.clear()
+
+        self.update_canvas()
+
 
     # ---------------- Panning ----------------
     def start_pan(self, event):
@@ -221,51 +292,20 @@ class draw_borders:
 
     # ---------------- Canvas update ----------------
     def update_canvas(self):
-        """Redraws everything from the stroke history (handles draw + erase)."""
-        # Reset overlay
-        self.overlay_img = Image.new("RGBA", self.base_img.size, (0, 0, 0, 0))
+        """Redraw everything from base + strokes."""
+        # Ensure overlay is RGBA
+        self.overlay_img = self.base_img.convert("RGBA").copy()
 
+        # Replay all strokes
         for stroke in self.strokes:
-            mode = stroke.get("mode", "draw")
-            points = stroke.get("points", [])
-            thickness = int(stroke.get("thickness", 1))
-            color = stroke.get("color", (255, 255, 0, 255))
+            self._apply_stroke_to_overlay(stroke)
 
-            if mode == "draw":
-                # Draw continuous line through stored points (PIL will join them)
-                if len(points) > 1:
-                    draw = ImageDraw.Draw(self.overlay_img)
-                    draw.line(points, fill=color, width=thickness, joint="curve")
-
-            elif mode == "erase":
-                # Replay erase by interpolating between stored points and pasting original pixels
-                if len(points) < 1:
-                    continue
-                for i in range(1, len(points)):
-                    x0_pt, y0_pt = points[i - 1]
-                    x1_pt, y1_pt = points[i]
-                    dx = x1_pt - x0_pt
-                    dy = y1_pt - y0_pt
-                    steps = int(max(abs(dx), abs(dy))) or 1
-                    for s in range(steps + 1):
-                        xi = x0_pt + dx * s / steps
-                        yi = y0_pt + dy * s / steps
-                        bx0 = int(max(0, xi - thickness / 2))
-                        by0 = int(max(0, yi - thickness / 2))
-                        bx1 = int(min(self.base_img.width, xi + thickness / 2))
-                        by1 = int(min(self.base_img.height, yi + thickness / 2))
-                        if bx1 > bx0 and by1 > by0:
-                            region = self.original_img.crop((bx0, by0, bx1, by1))
-                            self.overlay_img.paste(region, (bx0, by0))
-
-        # Merge base + overlay and update canvas
-        merged = Image.alpha_composite(self.base_img.convert("RGBA"), self.overlay_img)
-        w, h = merged.size
-        scaled = merged.resize((int(w * self.scale), int(h * self.scale)), Image.NEAREST)
+        # Merge and show
+        merged = self.overlay_img
+        scaled = merged.resize((int(merged.width * self.scale), int(merged.height * self.scale)), Image.NEAREST)
         self.tk_img = ImageTk.PhotoImage(scaled)
         self.canvas.itemconfig(self.canvas_img_id, image=self.tk_img)
         self.canvas.coords(self.canvas_img_id, self.offset_x, self.offset_y)
-
 
     # ---------------- Keybinds ----------------
     def key_handler(self, event):
@@ -302,14 +342,28 @@ class draw_borders:
 
     # ---------------- Undo/Redo ----------------
     def undo(self):
-        if self.strokes:
-            self.redo_stack.append(self.strokes.pop())
-            self.update_canvas()
+        """Undo the last stroke (if available)."""
+        if not self.strokes:
+            return  # nothing to undo
+
+        stroke = self.strokes.pop()       # remove latest stroke
+        self.redo_stack.append(stroke)    # save it for redo
+        self.update_canvas()              # redraw without it
 
     def redo(self):
-        if self.redo_stack:
-            self.strokes.append(self.redo_stack.pop())
-            self.update_canvas()
+        """Redo the most recently undone stroke."""
+        if not self.redo_stack:
+            return  # nothing to redo
+
+        stroke = self.redo_stack.pop()    # get the stroke back
+        self.strokes.append(stroke)       # reapply it
+
+        # if strokes exceed 10 after redo, flatten oldest one
+        if len(self.strokes) > 10:
+            old_stroke = self.strokes.pop(0)
+            self._apply_stroke_to_base(old_stroke)
+
+        self.update_canvas()
 
     # ---------------- Save ----------------
     def save_image(self):

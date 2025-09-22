@@ -40,7 +40,7 @@ def measure_areas(areas, scale, cutoff, in_px, img_name, folder): #get the areas
             i += 1
             output_s.write(f"{i},{areas[key]},{diameter}\n")
 
-        print(f"Τα δεδομένα επιφάνειας αποθηκεύτηκαν στον φάκελο {file_s.split("\\")[0]} με όνομα: {file_s.split("\\")[1]}")
+        print(f"Diameter and surface data saved as {file_s.split("\\")[2]} as {"\\".join(file_s.split("\\")[:-1])}")
          
 
     return round(totarea/total, 2), diams, round(totdiam/total, 2)

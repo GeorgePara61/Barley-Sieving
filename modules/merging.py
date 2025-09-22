@@ -3,12 +3,14 @@ import matplotlib.pyplot as plt
 
 def merge(analyzed_imgs, bin_cnt, aspect_ratios): #this merges the surface and diameter data from all images analyzed and bins diameter data
 
-    def read_data(cmn_name, num): #reads data for each image
+    def read_data(cmn_name, num, cmn_nums): #reads data for each image
 
         #inter = input()
         cutoff = 0
-        filename = "reports" + "\\" + cmn_name + str(num) + "\\" + cmn_name + str(num) + '_surfaces_diameters.csv'
-
+        if cmn_nums:
+            filename = "reports" + "\\" + cmn_name + str(num) + "\\" + cmn_name + str(num) + '_surfaces_diameters.csv'
+        else: filename = "reports" + "\\"  + str(num) + "\\"  + str(num) + '_surfaces_diameters.csv'
+            
         total = 0
         totarea = 0
         diams = []
@@ -76,7 +78,9 @@ def merge(analyzed_imgs, bin_cnt, aspect_ratios): #this merges the surface and d
         for letter in reversed(letters_list): letters += letter
         if not letters_prev == '':
             if letters != letters_prev:
-                print(f"Problem with names. One of the files has common name {letters_prev} and the other has {letters}. Both expected {letters_prev}.")
+                print(f"Problem with names. One of the files has common name {letters_prev} and the other has {letters}. Both expected {letters_prev}. Reverting to individual names.")
+                nums_temp = []
+                break
         letters_prev = letters
         nums_temp.append(numbers)
 
@@ -88,15 +92,18 @@ def merge(analyzed_imgs, bin_cnt, aspect_ratios): #this merges the surface and d
     mrg_name = "-"
     bin_name = "-"
     bin_count = bin_cnt
+    cmn_nums =  True
 
     if nums == []:
-        for i in range(1, len(analyzed_imgs)): nums.append(i)
+        nums = analyzed_imgs
+        cmn_nums = False
+
 
     totdiams= []
     totareas = []
 
     for num in nums: #request data
-        diameters, scaled_areas = read_data(cmn_name, int(num))
+        diameters, scaled_areas = read_data(cmn_name, int(num), cmn_nums)
         for diam in diameters: totdiams.append(diam)
         for area in scaled_areas: totareas.append(area)
 
@@ -118,6 +125,7 @@ def merge(analyzed_imgs, bin_cnt, aspect_ratios): #this merges the surface and d
         for area, diam in zip(totareas, totdiams):
             diameter_output.write(f"{i},{area},{diam}\n")
             i += 1
+    print(f"Merged diameter and surface data has been saved as {file_out_diams.split("\\")[1]} in {file_out_diams.split("\\")[0]}")
 
     counts = {}
     hist_dat = []
@@ -142,7 +150,7 @@ def merge(analyzed_imgs, bin_cnt, aspect_ratios): #this merges the surface and d
         for key in counts:
             output.write(f"{key},{counts[key]}\n")
 
-        print(f"Τα οργανωμένα κατα διαστήματα δεδομένα ακτίνας αποθηκεύτηκαν με όνομα: {file_d}")
+        print(f"Binned merged diameter data has been saved as {file_d.split("\\")[1]} in {file_d.split("\\")[0]}")
 
     max_ar = (np.ceil(max(aspect_ratios))) #this bins the total aspect ratios and makes the histogram
     if max_ar - max(aspect_ratios) > 0.25: max_ar -= 0.25

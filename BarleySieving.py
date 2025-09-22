@@ -1,3 +1,4 @@
+print('Loading... Please wait...')
 import matplotlib
 matplotlib.use("TkAgg")
 import tkinter as tk
@@ -9,6 +10,9 @@ import sys
 import numpy as np
 import cv2
 from pathlib import Path
+import requests
+import webbrowser
+import subprocess
 
 from modules import cropper
 from modules import grayconv
@@ -36,6 +40,57 @@ def set_dpi_awareness():
 
 def get_scaling_factor(root):   # Accessing Window's scaling to properly scale fonts in guis
     return root.winfo_fpixels('1i') / 96
+
+def get_update(parent):
+    curr_ver = 'v2.3.7'
+
+    owner = "GeorgePara61"
+    repo = "Barley-Sieving"
+
+    url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        latest_tag = data["tag_name"]  # <- this is the latest release tag
+        if curr_ver == str(latest_tag):
+            print("Appplication up to date.")
+        else:
+            print(f"Update Needed.\nCurrent Version: {curr_ver}\nLaterst Version: {str(latest_tag)}")
+            win = tk.Toplevel(parent)
+            win.title(f"Update Needed")
+
+            scaling = get_scaling_factor(parent) #request the scaling facto
+
+            win.geometry(f"{int(280* scaling)}x{int(160* scaling)}") #gui dimensions (widthxheight)
+    
+            win.focus()
+            win.grid_rowconfigure(4, weight=1)
+            win.grid_columnconfigure(4, weight=1)  
+        
+            tk.Label(win, text=f"The app needs to update to version {str(latest_tag)}.\nWould you like to update?\nThis will guide you to the download page.\n It'll delete the app with all the related info.\nCopy files you might need!").pack(expand=True) #these commands create labels on the gui
+            
+            def on_continue(event=None): #read the parameters and start working
+                webbrowser.open(f'https://github.com/GeorgePara61/Barley-Sieving/releases/download/{str(latest_tag)}/BarleySetup.exe')
+                subprocess.Popen(['unins000.exe'])
+                sys.exit()
+
+            def on_exit(event=None): #exit the program
+                global rerun
+                rerun = False
+                win.destroy()
+
+            button_frame = tk.Frame(win)
+            button_frame.pack() 
+
+            btn1 = tk.Button(button_frame, width= 16, text="Yes", command=on_continue)
+            btn2 = tk.Button(button_frame, width= 16, text="No", command=on_exit)
+
+            btn1.pack(side="left", padx=10, pady=10)
+            btn2.pack(side="left", padx=10, pady=10) 
+
+            win.grab_set()       
+            win.wait_window()
 
 def generate_input_GUI(parent, user_inputs): #generating a gui to input parameters
     win = tk.Toplevel(parent)
@@ -551,6 +606,8 @@ aspect_ratios_all = [] #stores aspect ratios of all images
 getguides = True
 guidn = 0
 
+get_update(root)
+
 file = f"defaults.txt"
 with open(file, "r") as input: #load default parameters
     for line in input:
@@ -562,13 +619,13 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     guidn = 1
     info = True #this hanles whether the info panel will show. Not choosing info on the first gui sets it to false
     while info: #this gives the ability to loop from the info to the input gui while the latter is open
-        if not rerun: exit(-1)
+        if not rerun: sys.exit()
         generate_input_GUI(root, user_inputs)
         if not info: break
 
         generate_info_GUI(root)
         
-    if not rerun: exit(-1)
+    if not rerun: sys.exit()
 
     img_name, kernel_g, stdev, conval, tgs_s, d, sc, ss, ksize, blend_strength, gamma, thr1, thr2, kernel_s, min_size, scale, crop = user_inputs[0], user_inputs[1], float(user_inputs[2]), float(user_inputs[3]), user_inputs[4], int(user_inputs[5]), float(user_inputs[6]), float(user_inputs[7]), int(user_inputs[8]), float(user_inputs[9]), float(user_inputs[10]), int(user_inputs[11]), int(user_inputs[12]), (user_inputs[13]), int(user_inputs[14]), user_inputs[15], int(user_inputs[16])
     analyzed_imgs.append(".".join(img_name.split(".")[:-1]))
@@ -602,7 +659,7 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     if getguides: generate_tutorial_GUI(root)
     overlay_img, overimg_name, user_inputs[11], user_inputs[12], user_inputs[1], user_inputs[2], user_inputs[3], user_inputs[4], user_inputs[5], user_inputs[6], user_inputs[7], user_inputs[8], user_inputs[9], user_inputs[10] = overlay.overlay_borders(grayed, img_name, preproccessed, thr1, thr2, kernel, min_size, outline_img, kernel_g.split(",")[0], stdev, conval, tgs_s.split(",")[0], d, sc, ss, ksize, blend_strength, gamma, folder_path) #this overlays the detected borders to the original. Sliders that can change the different parameters exist
 
-    print(f"Η εικόνα των συνώρων αποθηκεύτηκε ως {overimg_name.split("\\")[2]} στον φάκελο {"\\".join(overimg_name.split("\\")[:-1])}.")
+    print(f"The detected borders image has been saved as {overimg_name.split("\\")[2]} in {"\\".join(overimg_name.split("\\")[:-1])}.")
 
     if getguides: generate_tutorial_GUI(root)
     generate_draw_GUI(root, overimg_name, folder_path, img_name) #this gui requests the name of the image to draw on. The image the program was just working on is default, but it takes any image in \border_overlays and \border_overlays_complete
@@ -612,9 +669,11 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     root.wait_window(draw.win)
     overfinal_name = draw.last_saved_file
 
-    if overfinal_name != None: print(f"Η εικόνα των ολοκληρωμένων συνώρων αποθηκεύτηκε ως {overfinal_name.split("\\")[1]} στον φάκελο {overfinal_name.split("\\")[0]}.")
+    if overfinal_name != None: print(f"The complete border image that will be defaulted to use is {overfinal_name.split("\\")[2]} in {"\\".join(overfinal_name.split("\\")[:-1])}.")
 
-    if overfinal_name == None: overfinal_name = 'Select Image or press SKIP' #if the user didn't save an image from the draw phase, the program requests an image from border_overlays_complete
+    if overfinal_name == None: 
+        overfinal_name = 'Select Image or press SKIP' #if the user didn't save an image from the draw phase, the program requests an image from border_overlays_complete
+        print("No complete borders image saved. Choose one to continue.")
     if scale == None: 
         scale == 'Input scale in μm/px'
         cutoff = 'Input in px ONLY!!'
