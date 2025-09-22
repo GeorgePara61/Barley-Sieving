@@ -3,6 +3,7 @@ import numpy as np
 from tqdm import tqdm
 import pandas as pd
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 def analyze_directionality(label_map, px_area_dict, area_dict, scale, img_name, folder): #fits ellipses, saves data, makes an aspect ratio histogram and an orientation radar diagram
     grain_properties = []
@@ -47,7 +48,7 @@ def analyze_directionality(label_map, px_area_dict, area_dict, scale, img_name, 
                 aspect_ratio = major_axis / minor_axis
 
                 #the following commented out block saves the images of the grains with the ellipses on them. It was used to check the ellipse fitting
-                '''debug_image = np.zeros((grain_mask.shape[0], grain_mask.shape[1], 3), dtype=np.uint8)
+                debug_image = np.zeros((grain_mask.shape[0], grain_mask.shape[1], 3), dtype=np.uint8)
                 debug_image[grain_mask] = (255, 255, 255)  # White for the grain
                 cv2.ellipse(debug_image, ellipse_params, (255, 255, 0), 2)  # Red ellipse, 2px thickness
                 center = (int(center_x), int(center_y))
@@ -84,7 +85,9 @@ def analyze_directionality(label_map, px_area_dict, area_dict, scale, img_name, 
                 cv2.line(debug_image, minor_end1, minor_end2, (0, 255, 0), 2)  # Cyan minor axis
 
                 # 5. Save the image with a descriptive filename
-                cv2.imwrite(f'ellipses/grain_{label}_fit_{label}.png', debug_image)'''
+                ellipse_path = Path(f"{folder}\\ellipses")
+                ellipse_path.mkdir(parents = True, exist_ok = True)
+                cv2.imwrite(f'{str(ellipse_path)}\\grain_{label}_fit.png', debug_image)
 
                 aspect_ratios.append(aspect_ratio)
                 angles.append(angle_deg)

@@ -1,4 +1,3 @@
-print('Loading... Please wait...')
 import matplotlib
 matplotlib.use("TkAgg")
 import tkinter as tk
@@ -13,6 +12,7 @@ from pathlib import Path
 import requests
 import webbrowser
 import subprocess
+import os
 
 from modules import cropper
 from modules import grayconv
@@ -48,8 +48,12 @@ def get_update(parent):
     repo = "Barley-Sieving"
 
     url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
+    try:
+        response = requests.get(url)
+    except Exception as fuckoff:
+        print(f"Cannot connect to GitHub to get update info. Maybe check your internet connection?\nCurrent Version: {curr_ver}\nLatest Version: Unable to retrieve")
+        return
 
-    response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
         latest_tag = data["tag_name"]  # <- this is the latest release tag
@@ -71,13 +75,13 @@ def get_update(parent):
             tk.Label(win, text=f"The app needs to update to version {str(latest_tag)}.\nWould you like to update?\nThis will guide you to the download page.\n It'll delete the app with all the related info.\nCopy files you might need!").pack(expand=True) #these commands create labels on the gui
             
             def on_continue(event=None): #read the parameters and start working
+                win.destroy()
                 webbrowser.open(f'https://github.com/GeorgePara61/Barley-Sieving/releases/download/{str(latest_tag)}/BarleySetup.exe')
                 subprocess.Popen(['unins000.exe'])
-                sys.exit()
+                root.destroy()
+                os._exit(0)
 
             def on_exit(event=None): #exit the program
-                global rerun
-                rerun = False
                 win.destroy()
 
             button_frame = tk.Frame(win)
