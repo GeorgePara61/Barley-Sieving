@@ -42,7 +42,7 @@ def get_scaling_factor(root):   # Accessing Window's scaling to properly scale f
     return root.winfo_fpixels('1i') / 96
 
 def get_update(parent):
-    curr_ver = 'v2.3.7'
+    curr_ver = 'v2.3.8'
 
     owner = "GeorgePara61"
     repo = "Barley-Sieving"
@@ -76,7 +76,7 @@ def get_update(parent):
             
             def on_continue(event=None): #read the parameters and start working
                 win.destroy()
-                webbrowser.open(f'https://github.com/GeorgePara61/Barley-Sieving/releases/download/{str(latest_tag)}/BarleySetup.exe')
+                webbrowser.open(f'https://github.com/GeorgePara61/Barley-Sieving/releases/{str(latest_tag)}')
                 subprocess.Popen(['unins000.exe'])
                 root.destroy()
                 os._exit(0)
@@ -102,33 +102,33 @@ def generate_input_GUI(parent, user_inputs): #generating a gui to input paramete
 
     scaling = get_scaling_factor(parent) #request the scaling factor
 
-    win.geometry(f"{int(560* scaling)}x{int(550* scaling)}") #gui dimensions (widthxheight)
+    win.geometry(f"{int(560* scaling)}x{int(600* scaling)}") #gui dimensions (widthxheight)
 
     win.focus()
 
     small_font = tkFont.Font(family="Segoe UI", size=7, weight="normal")
     large_font = tkFont.Font(family="Segoe UI", size=12, weight="normal")
 
-    tk.Label(win, text="Initial Parameter Input (Can be changed later)", font = large_font).grid(row=3, column=0, columnspan=6, sticky="we", padx=10, pady=(10, 0)) #these commands create labels on the gui
+    tk.Label(win, text="Initial Parameter Input (Can be changed later)", font = large_font).grid(row=5, column=0, columnspan=6, sticky="we", padx=10, pady=(10, 0)) #these commands create labels on the gui
 
     tk.Label(win, text="Picture Name, Scale, Crop").grid(row=0, column=0, columnspan=6, sticky="w", padx=10, pady=(10, 0)) #these commands create labels on the gui
     folder = Path('images')
     images = [str(f).split("\\")[1] for f in folder.iterdir() if f.is_file()]
-    img_sel = ttk.Combobox(win,values = images)
-    img_sel.grid(row=2, column=0, columnspan=2, padx=10, pady=5)
+    img_sel = ttk.Combobox(win,values = images, width=80)
+    img_sel.grid(row=2, column=0, columnspan=6, padx=10, pady=5)
     img_sel.set("")  # Default value
     img_sel.bind('<Button-1>', lambda e: img_sel.event_generate('<Down>'))
-    tk.Label(win, text="Should be in {app directory}\\images", font = small_font).grid(row=1, column=0, columnspan= 2, sticky = "w", padx=10, pady=0)
-    entry16 = tk.Entry(win, width=26)
-    entry16.grid(row=2, column=2, columnspan=2, padx=10, pady=5)
-    tk.Label(win, text="Scale (μm/px) ('-' for manual)", font = small_font).grid(row=1, column=2, columnspan= 2, sticky = "w", padx=10, pady=0)
+    tk.Label(win, text="Should be in {app directory}\\images", font = small_font).grid(row=1, column=0, columnspan= 6, sticky = "w", padx=10, pady=0)
+    entry16 = tk.Entry(win, width=39)
+    entry16.grid(row=4, column=0, columnspan=3, padx=10, pady=5)
+    tk.Label(win, text="Scale(μm/px) ('-' = manual)", font = small_font).grid(row=3, column=0, columnspan= 3, sticky = "w", padx=10, pady=0)
 
-    tk.Label(win, text="Should it be cropped? Input height (px)", font = small_font).grid(row=1, column=4, columnspan=2, sticky="w", padx=10, pady=(10, 0))
+    tk.Label(win, text="Crop Input height (px)", font = small_font).grid(row=3, column=3, columnspan=3, sticky="w", padx=10, pady=(10, 0))
 
     frame = tk.Frame(win)
-    frame.grid(row=2, column=4, columnspan=2)
+    frame.grid(row=4, column=3, columnspan=3)
 
-    entry17 = tk.Entry(frame, width=18)
+    entry17 = tk.Entry(frame, width=33)
     entry17.pack(side="left", padx=(0, 5))
 
     options = ["Yes", "No"]
@@ -138,65 +138,65 @@ def generate_input_GUI(parent, user_inputs): #generating a gui to input paramete
     crop_sel.set("Yes")  # Default value
     crop_sel.bind('<Button-1>', lambda e: crop_sel.event_generate('<Down>'))
 
-    tk.Label(win, text="1) Pre Contrast Adjustment Smoothing Parameters").grid(row=5, column=0, columnspan=6, sticky="w", padx=10)
-    tk.Label(win, text="Smoothing Range:", font = small_font, pady=0).grid(row=6, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="1) Pre Contrast Adjustment Smoothing Parameters").grid(row=6, column=0, columnspan=6, sticky="w", padx=10)
+    tk.Label(win, text="Smoothing Range:", font = small_font, pady=0).grid(row=7, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
     tk.Label(win, text="Standard Deviation (px):", font = small_font, pady=0).grid(row=7, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
 
     entry2 = tk.Entry(win, width=39)
-    entry2.grid(row=7, column=0, columnspan= 3, padx=10, pady=5)
+    entry2.grid(row=8, column=0, columnspan= 3, padx=10, pady=5)
     entry3 = tk.Entry(win, width=39)
-    entry3.grid(row=7, column=3, columnspan= 3, padx=10, pady=5)
+    entry3.grid(row=8, column=3, columnspan= 3, padx=10, pady=5)
 
-    tk.Label(win, text="2) Contrast Enhancement Parameters:").grid(row=9, column=0, columnspan=6, sticky="w", padx=10, pady=(10, 0))
-    tk.Label(win, text="Intensity:", font = small_font, pady=0).grid(row=10, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
-    tk.Label(win, text="Transitions (px):", font = small_font, pady=0).grid(row=10, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="2) Contrast Enhancement Parameters:").grid(row=10, column=0, columnspan=6, sticky="w", padx=10, pady=(10, 0))
+    tk.Label(win, text="Intensity:", font = small_font, pady=0).grid(row=11, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Transitions (px):", font = small_font, pady=0).grid(row=11, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
 
     entry4 = tk.Entry(win, width=39)
-    entry4.grid(row=11, column=0, columnspan=3, padx=10, pady=5)
+    entry4.grid(row=12, column=0, columnspan=3, padx=10, pady=5)
     entry5 = tk.Entry(win, width=39)
-    entry5.grid(row=11, column=3, columnspan=3, padx=10, pady=5)
+    entry5.grid(row=12, column=3, columnspan=3, padx=10, pady=5)
 
-    tk.Label(win, text="3) Post Contrast Adjustment Smoothing Parameters").grid(row=13, column=0, columnspan=6, sticky="w", padx=10)
-    tk.Label(win, text="Smoothing Range (px):", font = small_font, pady=0).grid(row=14, column=0, columnspan= 2, sticky="w", padx=10, pady=0)
-    tk.Label(win, text="Affected Color Range (gv):", font = small_font, pady=0).grid(row=14, column=2, columnspan= 2, sticky="w", padx=10, pady=0)
-    tk.Label(win, text="Affected Area Range (px):", font = small_font, pady=0).grid(row=14, column=4, columnspan= 2, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="3) Post Contrast Adjustment Smoothing Parameters").grid(row=14, column=0, columnspan=6, sticky="w", padx=10)
+    tk.Label(win, text="Smoothing Range (px):", font = small_font, pady=0).grid(row=15, column=0, columnspan= 2, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Affected Color Range (gv):", font = small_font, pady=0).grid(row=15, column=2, columnspan= 2, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Affected Area Range (px):", font = small_font, pady=0).grid(row=15, column=4, columnspan= 2, sticky="w", padx=10, pady=0)
 
     entry6 = tk.Entry(win, width=24)
-    entry6.grid(row=15, column=0, columnspan= 2, padx=10, pady=5)
+    entry6.grid(row=16, column=0, columnspan= 2, padx=10, pady=5)
     entry7 = tk.Entry(win, width=24)
-    entry7.grid(row=15, column=2, columnspan= 2, padx=10, pady=5)
+    entry7.grid(row=16, column=2, columnspan= 2, padx=10, pady=5)
     entry8 = tk.Entry(win, width=24)
-    entry8.grid(row=15, column=4, columnspan= 2, padx=10, pady=5)
+    entry8.grid(row=16, column=4, columnspan= 2, padx=10, pady=5)
 
-    tk.Label(win, text="4) Gradient Enhancement Parameters - Boundary Prominence:").grid(row=17, column=0, columnspan=6, sticky="w", padx=10)
-    tk.Label(win, text="Thickness:", font = small_font, pady=0).grid(row=18, column=0, columnspan= 2, sticky="w", padx=10, pady=0)
-    tk.Label(win, text="Blend Factor:", font = small_font, pady=0).grid(row=18, column=2, columnspan= 2, sticky="w", padx=10, pady=0)
-    tk.Label(win, text="Gamma:", font = small_font, pady=0).grid(row=18, column=4, columnspan= 2, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="4) Gradient Enhancement Parameters - Boundary Prominence:").grid(row=18, column=0, columnspan=6, sticky="w", padx=10)
+    tk.Label(win, text="Thickness:", font = small_font, pady=0).grid(row=19, column=0, columnspan= 2, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Blend Factor:", font = small_font, pady=0).grid(row=19, column=2, columnspan= 2, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Gamma:", font = small_font, pady=0).grid(row=19, column=4, columnspan= 2, sticky="w", padx=10, pady=0)
 
     entry9 = tk.Entry(win, width=24)
-    entry9.grid(row=19, column=0, columnspan= 2, padx=10, pady=5)
+    entry9.grid(row=20, column=0, columnspan= 2, padx=10, pady=5)
     entry10 = tk.Entry(win, width=24)
-    entry10.grid(row=19, column=2, columnspan= 2, padx=10, pady=5)
+    entry10.grid(row=20, column=2, columnspan= 2, padx=10, pady=5)
     entry11 = tk.Entry(win, width=24)
-    entry11.grid(row=19, column=4, columnspan= 2, padx=10, pady=5)
+    entry11.grid(row=20, column=4, columnspan= 2, padx=10, pady=5)
 
-    tk.Label(win, text="5) Canny Parameters").grid(row=21, column=0, columnspan=6, sticky="w", padx=10)
-    tk.Label(win, text="Canny Threshold 1 (gv/px):", font = small_font, pady=0).grid(row=22, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
-    tk.Label(win, text="Canny Threshold 2 (gv/px):", font = small_font, pady=0).grid(row=22, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="5) Canny Parameters").grid(row=22, column=0, columnspan=6, sticky="w", padx=10)
+    tk.Label(win, text="Canny Threshold 1 (gv/px):", font = small_font, pady=0).grid(row=23, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Canny Threshold 2 (gv/px):", font = small_font, pady=0).grid(row=23, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
 
     entry12 = tk.Entry(win, width=39)
-    entry12.grid(row=23, column=0, columnspan=3, padx=10, pady=5)
+    entry12.grid(row=24, column=0, columnspan=3, padx=10, pady=5)
     entry13 = tk.Entry(win, width=39)
-    entry13.grid(row=23, column=3, columnspan=3, padx=10, pady=5)
+    entry13.grid(row=24, column=3, columnspan=3, padx=10, pady=5)
 
-    tk.Label(win, text="5) Gap and Noise Removal").grid(row=25, column=0, columnspan=6, sticky="w", padx=10)
-    tk.Label(win, text="Gap Bridge Parameter:", font = small_font, pady=0).grid(row=26, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
-    tk.Label(win, text="Minimum Object Size (px):", font = small_font, pady=0).grid(row=26, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="5) Gap and Noise Removal").grid(row=26, column=0, columnspan=6, sticky="w", padx=10)
+    tk.Label(win, text="Gap Bridge Parameter:", font = small_font, pady=0).grid(row=27, column=0, columnspan= 3, sticky="w", padx=10, pady=0)
+    tk.Label(win, text="Minimum Object Size (px):", font = small_font, pady=0).grid(row=27, column=3, columnspan= 3, sticky="w", padx=10, pady=0)
 
     entry14 = tk.Entry(win, width=39)
-    entry14.grid(row=27, column=0, columnspan=3, padx=10, pady=5)
+    entry14.grid(row=28, column=0, columnspan=3, padx=10, pady=5)
     entry15 = tk.Entry(win, width=39)
-    entry15.grid(row=27, column=3, columnspan=3, padx=10, pady=5)
+    entry15.grid(row=28, column=3, columnspan=3, padx=10, pady=5)
 
     try: #this tries to import default data from defaults.txt
         img_sel.insert(0, user_inputs.pop(0))
@@ -274,9 +274,9 @@ def generate_input_GUI(parent, user_inputs): #generating a gui to input paramete
         user_inputs.append(entry17.get())
         win.destroy()
 
-    tk.Button(win, width = 24, text="Run", command=on_continue).grid(row=29, column=0, columnspan=2, pady=10) #this command creates and places a button on the gui
-    tk.Button(win, width = 24, text="Info", command=on_info).grid(row=29, column=2, columnspan=2, pady=10)
-    tk.Button(win, width = 24, text="Exit", command=on_exit).grid(row=29, column=4, columnspan=2, pady=10)
+    tk.Button(win, width = 24, text="Run", command=on_continue).grid(row=30, column=0, columnspan=2, pady=10) #this command creates and places a button on the gui
+    tk.Button(win, width = 24, text="Info", command=on_info).grid(row=30, column=2, columnspan=2, pady=10)
+    tk.Button(win, width = 24, text="Exit", command=on_exit).grid(row=30, column=4, columnspan=2, pady=10)
 
 
     win.bind("<Return>", on_continue)
@@ -295,18 +295,18 @@ def generate_output_GUI(parent, mean, grains, anal_imgs, dir_report, mean_d): #a
     win.focus()
 
     if grains != None and mean != None and mean_d != None: #Following is the text creation the user sees when this gui is generated
-        text = f"> Found a total of {grains} grains!\n> Mean grain area is {mean} μm²!\nMean Diameter is {mean_d} μm!\n"
+        text = f"> Found a total of {grains} grains!\n> Mean grain area is {mean} μm²!\n> Mean Diameter is {mean_d} μm!\n"
     else: 
         text = f'> Grains Not Found\n> Mean area not calculated\n> Mean Diameter not calculated\n'
 
     if len(anal_imgs) > 0:
         strimg = "> Analyzed Images so far: "
-        for image in anal_imgs:
+        for i in range(len(anal_imgs)):
             if len(anal_imgs) > 1:
-                if not image == anal_imgs[len(anal_imgs) - 1]: strimg = strimg + image + ", "
-                else: strimg = strimg + image
-            elif len(anal_imgs) == 1: strimg = strimg + image
-        strimg = strimg + ".\n"
+                if not anal_imgs[i] == anal_imgs[len(anal_imgs) - 1]: strimg = strimg + f'\n{i+1})\u00A0'  + anal_imgs[i]
+                else: strimg = strimg + f'\n{i+1})\u00A0' + anal_imgs[i]
+            elif len(anal_imgs) == 1: strimg = strimg + f'\n{i+1})\u00A0' + anal_imgs[i]
+        strimg = strimg + "\n"
     else: strimg = '> No Images have been analyzed.\n'
 
     if dir_report == None: dir_report = 'No directionality data.'
@@ -483,7 +483,7 @@ def generate_draw_GUI(parent, img_name, folder, img_name_or): #generate a gui to
 
     scaling = get_scaling_factor(parent)
 
-    win.geometry(f"{int(350* scaling)}x{int(120* scaling)}")
+    win.geometry(f"{int(560* scaling)}x{int(120* scaling)}")
 
     win.focus()
 
@@ -493,7 +493,7 @@ def generate_draw_GUI(parent, img_name, folder, img_name_or): #generate a gui to
     images_in = list(folder.glob(f"{".".join(img_name_or.split(".")[:-1])}_overlay*.tif"))
     images = []
     for img in images_in: images.append(str(img).split("\\")[2])
-    img_sel = ttk.Combobox(win,values = images, width = 40)
+    img_sel = ttk.Combobox(win,values = images, width = 80)
     img_sel.grid(row=2, column=0, columnspan=6, padx=10, pady=5)  # Default value
     img_sel.bind('<Button-1>', lambda e: img_sel.event_generate('<Down>'))
 
@@ -668,7 +668,7 @@ while rerun: #looping the program, unless exit is pressed which sets rerun = Fal
     if getguides: generate_tutorial_GUI(root)
     generate_draw_GUI(root, overimg_name, folder_path, img_name) #this gui requests the name of the image to draw on. The image the program was just working on is default, but it takes any image in \border_overlays and \border_overlays_complete
 
-    print("Draw Keybinds:\nDraw: d\nErase: e\nIcrease line thickness: +\nDecrease line thickness: -\nUndo: u\nRedo: r\nSave: s\nQuit: q")
+    print("Draw Keybinds:\nDraw: d\nErase: e\nUndo: u\nRedo: r\nSave: s\nQuit: q\nIcrease line thickness: +\nDecrease line thickness: -")
     draw = completeborders.draw_borders(root, overimg_name, grayed, folder_path) #user drawn borders
     root.wait_window(draw.win)
     overfinal_name = draw.last_saved_file

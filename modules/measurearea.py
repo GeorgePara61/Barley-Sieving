@@ -23,7 +23,7 @@ def measure_areas(areas, scale, cutoff, in_px, img_name, folder): #get the areas
         diams.append(diam)
         areas[key] = area
 
-    print(f"Mean Value of area is {round(totarea/total, 2)} μm²")
+    print(f"Mean Value of area and diameter is, respectively, {round(totarea/total, 2)} μm² and {round(totdiam/total, 2)} μm")
 
     #here save the area and diameter data in csv files
 

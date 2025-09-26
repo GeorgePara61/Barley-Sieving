@@ -45,6 +45,6 @@ def bin_diameters(diameters, iter, img_name, folder): #this function handles dat
         for key in counts:
             output.write(f"{key},{counts[key]}\n")
 
-        print(f"Τα οργανωμένα κατα διαστήματα δεδομένα ακτίνας αποθηκεύτηκαν με όνομα: {file_d.split("\\")[2]} στον φάκελο {"\\".join(file_d.split("\\")[:-1])}")
+        print(f"Binned diameter data have been saved as: {file_d.split("\\")[2]} in {"\\".join(file_d.split("\\")[:-1])}")
 
     return

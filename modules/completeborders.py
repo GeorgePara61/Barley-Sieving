@@ -113,7 +113,6 @@ class draw_borders:
                         width=stroke["thickness"]
                     )
 
-
         elif stroke["mode"] == "erase":
             size = stroke["thickness"]
             points = stroke["points"]
@@ -122,8 +121,11 @@ class draw_borders:
                 y0 = int(max(0, points[i][1] - size / 2))
                 x1 = int(min(self.base_img.width, points[i][0] + size / 2))
                 y1 = int(min(self.base_img.height, points[i][1] + size / 2))
-                region = self.original_img.crop((x0, y0, x1, y1))
-                self.overlay_img.paste(region, (x0, y0))
+
+                # ✅ prevent invalid crop boxes
+                if x1 > x0 and y1 > y0:
+                    region = self.original_img.crop((x0, y0, x1, y1))
+                    self.overlay_img.paste(region, (x0, y0))
 
 
     def _apply_stroke_to_base(self, stroke):
@@ -140,7 +142,6 @@ class draw_borders:
                         width=stroke["thickness"]
                     )
 
-
         elif stroke["mode"] == "erase":
             size = stroke["thickness"]
             points = stroke["points"]
@@ -149,8 +150,12 @@ class draw_borders:
                 y0 = int(max(0, points[i][1] - size / 2))
                 x1 = int(min(self.base_img.width, points[i][0] + size / 2))
                 y1 = int(min(self.base_img.height, points[i][1] + size / 2))
-                region = self.original_img.crop((x0, y0, x1, y1))
-                self.base_img.paste(region, (x0, y0))
+
+                # ✅ prevent invalid crop boxes
+                if x1 > x0 and y1 > y0:
+                    region = self.original_img.crop((x0, y0, x1, y1))
+                    self.base_img.paste(region, (x0, y0))
+
 
     # ---------------- Drawing ----------------
     def start_draw(self, event):

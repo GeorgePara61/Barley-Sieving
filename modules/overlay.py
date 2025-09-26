@@ -174,15 +174,17 @@ def overlay_borders(original_img, img_name, img_s, thr1, thr2, kernel_v, min_gra
     else:
         index = 0
         for f in files:
-            f = str(f).split("\\")[2]
-            if f.split("_")[0] == ".".join(img_name.split(".")[:-1]):
+            f = str(f).split("\\")[-1]
+            if f.split("_")[-1].split(".")[0].isdigit(): base_name = "_".join(f.split("_")[:-2])
+            else: base_name = "_".join(f.split("_")[:-1])
+            if base_name == ".".join(img_name.split(".")[:-1]):
                 try:
-                    temp = int(".".join(f.split("_")[-1].split(".")[:-1])) + 1
+                    temp = int(f.split("_")[-1].split(".")[0]) + 1
                 except Exception:
                     index = 1
                     if len(files) == 1: break
                     else: continue    
-                temp = int(".".join(f.split("_")[-1].split(".")[:-1])) + 1
+                temp = int(f.split("_")[-1].split(".")[0]) + 1
                 if temp > index: index = temp
         
         if index == 0: grimg_name = f"{str(folder)}\\{".".join(img_name.split(".")[:-1])}_overlay.tif"

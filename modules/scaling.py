@@ -11,7 +11,7 @@ class ScaleCalibrator: #This gets the scale from the image, by drawing a line on
         self.img = cv2.imread(img_path) #load image
         
         if self.img is None:
-            raise ValueError(f"Could not load image from {img_path}")
+            raise ValueError(f"Could not load image from {img_path}.\nMaybe check for unsupported characters like '×'?")
         
         self.setup_window()
         self.setup_variables()
